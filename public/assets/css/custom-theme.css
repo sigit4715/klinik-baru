@@ -1,0 +1,317 @@
+/**
+ * Custom Theme Override - Green Theme
+ * Override default purple (#8231D3) to green (#01B574)
+ */
+
+:root {
+    /* Override primary color to green */
+    --color-primary: #01B574 !important;
+    --color-primary-rgb: 1, 181, 116 !important;
+}
+
+/* Primary color overrides */
+.text-primary,
+.color-primary {
+    color: #01B574 !important;
+}
+
+.bg-primary,
+.order-bg-opacity-primary {
+    background-color: #01B574 !important;
+}
+
+.bg-opacity-primary {
+    background-color: rgba(1, 181, 116, 0.1) !important;
+}
+
+.btn-primary {
+    background-color: #01B574 !important;
+    border-color: #01B574 !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+    background-color: #019F65 !important;
+    border-color: #019F65 !important;
+}
+
+.btn-outline-primary {
+    color: #01B574 !important;
+    border-color: #01B574 !important;
+}
+
+.btn-outline-primary:hover {
+    background-color: #01B574 !important;
+    color: #fff !important;
+}
+
+/* Links */
+a.color-primary,
+a:hover {
+    color: #01B574;
+}
+
+/* Sidebar active */
+.sidebar .sidebar_nav li a.active,
+.sidebar .sidebar_nav li.open>a {
+    color: #01B574 !important;
+}
+
+.sidebar .sidebar_nav li a.active::after {
+    background-color: #01B574 !important;
+}
+
+/* Badges */
+.badge-primary,
+.badge.bg-primary {
+    background-color: #01B574 !important;
+}
+
+/* Form elements */
+.form-control:focus,
+.form-select:focus {
+    border-color: #01B574 !important;
+    box-shadow: 0 0 0 0.2rem rgba(1, 181, 116, 0.25) !important;
+}
+
+/* Cards and headers */
+.card-header .color-primary,
+.breadcrumb-title {
+    color: #01B574 !important;
+}
+
+/* Pagination */
+.page-item.active .page-link {
+    background-color: #01B574 !important;
+    border-color: #01B574 !important;
+}
+
+.page-link {
+    color: #01B574 !important;
+}
+
+/* Progress bars */
+.progress-bar {
+    background-color: #01B574 !important;
+}
+
+/* Nav tabs */
+.nav-link.active {
+    color: #01B574 !important;
+}
+
+/* Dashboard cards icons */
+.svg-icon.order-bg-opacity-primary {
+    background-color: rgba(1, 181, 116, 0.1) !important;
+}
+
+.svg-icon.color-primary,
+.svg-icon.order-bg-opacity-primary i {
+    color: #01B574 !important;
+}
+
+/* Invoice display */
+.display-3.text-primary,
+.payment-invoice-qr__number .display-3 {
+    color: #01B574 !important;
+}
+
+/* Alert links */
+.alert-link {
+    color: #01B574 !important;
+}
+
+/* Print button */
+.print-btn {
+    background: #01B574 !important;
+}
+
+.print-btn:hover {
+    background: #019F65 !important;
+}
+
+/* Revenue labels */
+.revenue-labels__icon.bg-primary {
+    background-color: #01B574 !important;
+}
+
+.revenue-labels__value.color-primary {
+    color: #01B574 !important;
+}
+
+/* Avatar */
+.avatar.bg-opacity-primary {
+    background-color: rgba(1, 181, 116, 0.1) !important;
+}
+
+.avatar-letter.text-primary {
+    color: #01B574 !important;
+}
+
+/* Dropdown */
+.dropdown-item:hover,
+.dropdown-item.active {
+    background-color: rgba(1, 181, 116, 0.1) !important;
+    color: #01B574 !important;
+}
+
+/* Welcome banner button */
+.banner-feature__btn.btn-primary {
+    background-color: #01B574 !important;
+    border-color: #01B574 !important;
+}
+
+/* Select2 */
+.select2-container--bootstrap-5 .select2-selection--single:focus,
+.select2-container--bootstrap-5.select2-container--focus .select2-selection {
+    border-color: #01B574 !important;
+    box-shadow: 0 0 0 0.2rem rgba(1, 181, 116, 0.25) !important;
+}
+
+.select2-container--bootstrap-5 .select2-results__option--selected,
+.select2-container--bootstrap-5 .select2-results__option--highlighted {
+    background-color: #01B574 !important;
+}
+
+/* ==================== TABLE & DATA LIST IMPROVEMENTS ==================== */
+
+/* Table rows - alternating colors with better visibility */
+.table tbody tr:nth-child(odd) {
+    background-color: #f8f9fa !important;
+}
+
+.table tbody tr:nth-child(even) {
+    background-color: #ffffff !important;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(1, 181, 116, 0.08) !important;
+}
+
+/* Table header */
+.table thead tr,
+.userDatatable-header {
+    background-color: #01B574 !important;
+}
+
+.userDatatable-header th,
+.table thead th {
+    color: #fff !important;
+    border-bottom: none !important;
+}
+
+.userDatatable-title {
+    color: #fff !important;
+}
+
+/* Gender Badges - Make more visible */
+.badge-success,
+.bg-success {
+    background-color: #01B574 !important;
+    color: #fff !important;
+}
+
+.badge-info,
+.bg-info {
+    background-color: #00B8D9 !important;
+    color: #fff !important;
+}
+
+.badge-warning,
+.bg-warning {
+    background-color: #FFA500 !important;
+    color: #fff !important;
+}
+
+.badge-danger,
+.bg-danger {
+    background-color: #FF4D4F !important;
+    color: #fff !important;
+}
+
+/* Gender badge specific - Laki-laki blue, Perempuan pink with dark text */
+.order-bg-opacity-primary.text-primary,
+.badge[class*="Laki"],
+span:contains("Laki") {
+    background-color: #4E90FF !important;
+    color: #fff !important;
+}
+
+/* Improved badge styling */
+.rounded-pill {
+    font-weight: 500 !important;
+    padding: 5px 12px !important;
+}
+
+/* Status badges */
+.order-bg-opacity-warning {
+    background-color: rgba(255, 165, 0, 0.15) !important;
+}
+
+.order-bg-opacity-success {
+    background-color: rgba(1, 181, 116, 0.15) !important;
+}
+
+.order-bg-opacity-info {
+    background-color: rgba(0, 184, 217, 0.15) !important;
+}
+
+/* Table cell content alignment */
+.userDatatable-content {
+    font-weight: 500 !important;
+}
+
+/* Card headers */
+.card-header {
+    background-color: #01B574 !important;
+    color: #fff !important;
+    border-radius: 10px 10px 0 0 !important;
+}
+
+.card-header h6,
+.card-header .card-title {
+    color: #fff !important;
+}
+
+/* Remove ugly borders */
+.card {
+    border: none !important;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08) !important;
+    border-radius: 10px !important;
+}
+
+/* Action buttons in table */
+.btn-default.btn-transparent-light {
+    background-color: transparent !important;
+    border: 1px solid #e0e0e0 !important;
+}
+
+.btn-default.btn-transparent-light:hover {
+    background-color: #01B574 !important;
+    border-color: #01B574 !important;
+    color: #fff !important;
+}
+
+/* RM Badge styling */
+a[href*="patients"] .text-primary,
+.userDatatable-content a {
+    color: #01B574 !important;
+    font-weight: 600 !important;
+}
+
+/* Improved sidebar styling */
+.sidebar-wrapper {
+    background: linear-gradient(180deg, #1a2332 0%, #0d1520 100%) !important;
+}
+
+.menu-title span {
+    color: #01B574 !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+}
+
+/* Logo area */
+.navbar-left .logo-area a {
+    color: #01B574 !important;
+}
