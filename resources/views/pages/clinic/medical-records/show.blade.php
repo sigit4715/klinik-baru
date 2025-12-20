@@ -42,6 +42,50 @@
                         <hr>
                         <p><strong>Anamnesa:</strong><br>{{ $record->anamnesa ?? '-' }}</p>
                         <p><strong>Diagnosis:</strong><br>{{ $record->diagnosis }}</p>
+
+                        @if($record->blood_pressure || $record->body_temperature || $record->pulse_rate || $record->respiratory_rate || $record->height || $record->weight)
+                            <hr>
+                            <h6><i class="uil uil-heartbeat me-1"></i>Tanda-Tanda Vital</h6>
+                            <div class="row">
+                                @if($record->blood_pressure)
+                                    <div class="col-md-4 mb-2">
+                                        <small class="text-muted">Tekanan Darah</small>
+                                        <p class="mb-0 fw-500">{{ $record->blood_pressure }} mmHg</p>
+                                    </div>
+                                @endif
+                                @if($record->body_temperature)
+                                    <div class="col-md-4 mb-2">
+                                        <small class="text-muted">Suhu Badan</small>
+                                        <p class="mb-0 fw-500">{{ $record->body_temperature }} °C</p>
+                                    </div>
+                                @endif
+                                @if($record->pulse_rate)
+                                    <div class="col-md-4 mb-2">
+                                        <small class="text-muted">Denyut Nadi</small>
+                                        <p class="mb-0 fw-500">{{ $record->pulse_rate }} x/menit</p>
+                                    </div>
+                                @endif
+                                @if($record->respiratory_rate)
+                                    <div class="col-md-4 mb-2">
+                                        <small class="text-muted">Pernapasan</small>
+                                        <p class="mb-0 fw-500">{{ $record->respiratory_rate }} x/menit</p>
+                                    </div>
+                                @endif
+                                @if($record->height)
+                                    <div class="col-md-4 mb-2">
+                                        <small class="text-muted">Tinggi Badan</small>
+                                        <p class="mb-0 fw-500">{{ $record->height }} cm</p>
+                                    </div>
+                                @endif
+                                @if($record->weight)
+                                    <div class="col-md-4 mb-2">
+                                        <small class="text-muted">Berat Badan</small>
+                                        <p class="mb-0 fw-500">{{ $record->weight }} kg</p>
+                                    </div>
+                                @endif
+                            </div>
+                        @endif
+
                         <p><strong>Tindakan:</strong><br>{{ $record->treatment ?? '-' }}</p>
 
                         @if(count($prescriptionDetails) > 0)

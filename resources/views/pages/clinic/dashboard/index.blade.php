@@ -48,7 +48,7 @@
                                 <div class="col-xl-4 text-end d-none d-xl-block">
                                     <div class="banner-feature__shape" style="padding: 20px;">
                                         <i class="uil uil-medical-square"
-                                            style="font-size: 120px; color: #8231D3; opacity: 0.3;"></i>
+                                            style="font-size: 120px; color: #01B574; opacity: 0.3;"></i>
                                     </div>
                                 </div>
                             </div>
@@ -255,8 +255,9 @@
                                             <tr>
                                                 <td colspan="5" class="text-center py-4">
                                                     <div class="dm-empty text-center">
-                                                        <div class="dm-empty__image"><img class="svg"
-                                                                src="{{ asset('assets/img/svg/empty-cart.svg') }}" alt="empty">
+                                                        <div class="dm-empty__image py-3">
+                                                            <i class="uil uil-calendar-slash"
+                                                                style="font-size: 60px; color: #ccc;"></i>
                                                         </div>
                                                         <div class="dm-empty__text">
                                                             <p class="text-muted">Belum ada antrian hari ini</p>

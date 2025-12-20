@@ -104,10 +104,27 @@ Route::group(['middleware' => 'auth'], function () {
                 Route::patch('{id}/status', [PaymentController::class, 'updateStatus'])->name('update-status');
             });
 
+            // Reports
+            Route::group(['prefix' => 'reports', 'as' => 'reports.'], function () {
+                Route::get('daily', [\App\Http\Controllers\ReportController::class, 'daily'])->name('daily');
+                Route::get('monthly', [\App\Http\Controllers\ReportController::class, 'monthly'])->name('monthly');
+                Route::get('yearly', [\App\Http\Controllers\ReportController::class, 'yearly'])->name('yearly');
+            });
+
             // Settings
             Route::group(['prefix' => 'settings', 'as' => 'settings.'], function () {
                 Route::get('profile', [ClinicSettingController::class, 'index'])->name('profile');
                 Route::put('profile', [ClinicSettingController::class, 'update'])->name('profile.update');
+            });
+
+            // User Management
+            Route::group(['prefix' => 'users', 'as' => 'users.'], function () {
+                Route::get('/', [\App\Http\Controllers\UserManagementController::class, 'index'])->name('index');
+                Route::get('create', [\App\Http\Controllers\UserManagementController::class, 'create'])->name('create');
+                Route::post('store', [\App\Http\Controllers\UserManagementController::class, 'store'])->name('store');
+                Route::get('{id}/edit', [\App\Http\Controllers\UserManagementController::class, 'edit'])->name('edit');
+                Route::put('{id}', [\App\Http\Controllers\UserManagementController::class, 'update'])->name('update');
+                Route::delete('{id}', [\App\Http\Controllers\UserManagementController::class, 'destroy'])->name('destroy');
             });
 
         });

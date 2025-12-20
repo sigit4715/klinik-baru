@@ -57,6 +57,61 @@
                                 <textarea name="diagnosis" class="form-control" rows="2"
                                     required>{{ old('diagnosis') }}</textarea>
                             </div>
+
+                            <h6 class="mt-4 mb-3"><i class="uil uil-heartbeat me-1"></i>Tanda-Tanda Vital (Opsional)</h6>
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Tekanan Darah</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="text" name="blood_pressure" class="form-control" 
+                                            value="{{ old('blood_pressure') }}" placeholder="120/80">
+                                        <span class="input-group-text">mmHg</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Suhu Badan</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" step="0.1" name="body_temperature" class="form-control" 
+                                            value="{{ old('body_temperature') }}" placeholder="36.5">
+                                        <span class="input-group-text">°C</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Denyut Nadi</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" name="pulse_rate" class="form-control" 
+                                            value="{{ old('pulse_rate') }}" placeholder="80">
+                                        <span class="input-group-text">x/menit</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Pernapasan</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" name="respiratory_rate" class="form-control" 
+                                            value="{{ old('respiratory_rate') }}" placeholder="20">
+                                        <span class="input-group-text">x/menit</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Tinggi Badan</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" step="0.1" name="height" class="form-control" 
+                                            value="{{ old('height') }}" placeholder="165">
+                                        <span class="input-group-text">cm</span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Berat Badan</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" step="0.1" name="weight" class="form-control" 
+                                            value="{{ old('weight') }}" placeholder="60">
+                                        <span class="input-group-text">kg</span>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="mb-3">
                                 <label class="form-label">Tindakan/Treatment</label>
                                 <textarea name="treatment" class="form-control" rows="2">{{ old('treatment') }}</textarea>

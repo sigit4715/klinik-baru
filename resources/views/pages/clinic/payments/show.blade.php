@@ -8,9 +8,14 @@
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <span><i class="uil uil-receipt me-2"></i>Detail Pembayaran</span>
-                        <a href="{{ route('clinic.payments.invoice', [app()->getLocale(), $payment->id]) }}"
-                            class="btn btn-sm btn-outline-secondary" target="_blank"><i
-                                class="uil uil-print me-1"></i>Cetak</a>
+                        <div>
+                            <a href="{{ route('clinic.payments.receipt', [app()->getLocale(), $payment->id]) }}"
+                                class="btn btn-sm btn-primary me-1" target="_blank"><i
+                                    class="uil uil-receipt me-1"></i>Cetak Struk</a>
+                            <a href="{{ route('clinic.payments.invoice', [app()->getLocale(), $payment->id]) }}"
+                                class="btn btn-sm btn-outline-secondary" target="_blank"><i
+                                    class="uil uil-print me-1"></i>Cetak Invoice</a>
+                        </div>
                     </div>
                     <div class="card-body">
                         <div class="row mb-4">

@@ -104,6 +104,21 @@
                         href="{{ route('clinic.payments.report', app()->getLocale()) }}">Laporan Harian</a></li>
             </ul>
         </li>
+        <li class="has-child {{ Request::is(app()->getLocale() . '/clinic/reports*') ? 'open' : '' }}">
+            <a href="#" class="{{ Request::is(app()->getLocale() . '/clinic/reports*') ? 'active' : '' }}">
+                <span class="nav-icon uil uil-chart-bar"></span>
+                <span class="menu-text">Laporan Keuangan</span>
+                <span class="toggle-icon"></span>
+            </a>
+            <ul>
+                <li><a class="{{ Request::is(app()->getLocale() . '/clinic/reports/daily') ? 'active' : '' }}"
+                        href="{{ route('clinic.reports.daily', app()->getLocale()) }}">Pendapatan Harian</a></li>
+                <li><a class="{{ Request::is(app()->getLocale() . '/clinic/reports/monthly') ? 'active' : '' }}"
+                        href="{{ route('clinic.reports.monthly', app()->getLocale()) }}">Pendapatan Bulanan</a></li>
+                <li><a class="{{ Request::is(app()->getLocale() . '/clinic/reports/yearly') ? 'active' : '' }}"
+                        href="{{ route('clinic.reports.yearly', app()->getLocale()) }}">Pendapatan Tahunan</a></li>
+            </ul>
+        </li>
 
         <li class="menu-title mt-30">
             <span>Master Data</span>
@@ -139,6 +154,13 @@
                 class="{{ Request::is(app()->getLocale() . '/clinic/settings/profile') ? 'active' : '' }}">
                 <span class="nav-icon uil uil-building"></span>
                 <span class="menu-text">Profil Klinik</span>
+            </a>
+        </li>
+        <li>
+            <a href="{{ route('clinic.users.index', app()->getLocale()) }}"
+                class="{{ Request::is(app()->getLocale() . '/clinic/users*') ? 'active' : '' }}">
+                <span class="nav-icon uil uil-users-alt"></span>
+                <span class="menu-text">Manajemen User</span>
             </a>
         </li>
         <li class="has-child">
