@@ -1,289 +1,583 @@
-@section('title', $title)
-@section('description', $description)
-@extends('layout.app')
+<!DOCTYPE html>
+<html lang="id">
 
-@push('styles')
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Display Antrian - Klinik</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://unicons.iconscout.com/release/v3.0.0/css/line.css">
     <style>
-        .queue-display-container {
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
             min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+            color: #fff;
         }
 
-        .current-queue-card {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 30px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-            animation: pulse-glow 2s ease-in-out infinite;
+        /* Animated background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 0;
         }
 
-        @keyframes pulse-glow {
+        .bg-animation .circle {
+            position: absolute;
+            border-radius: 50%;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            animation: float 20s infinite;
+        }
+
+        .bg-animation .circle:nth-child(1) {
+            width: 300px;
+            height: 300px;
+            top: -50px;
+            left: -50px;
+            animation-delay: 0s;
+        }
+
+        .bg-animation .circle:nth-child(2) {
+            width: 200px;
+            height: 200px;
+            top: 50%;
+            right: -50px;
+            animation-delay: -5s;
+        }
+
+        .bg-animation .circle:nth-child(3) {
+            width: 400px;
+            height: 400px;
+            bottom: -100px;
+            left: 30%;
+            animation-delay: -10s;
+        }
+
+        .bg-animation .circle:nth-child(4) {
+            width: 150px;
+            height: 150px;
+            top: 20%;
+            left: 60%;
+            animation-delay: -15s;
+        }
+
+        @keyframes float {
 
             0%,
             100% {
-                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+                transform: translateY(0) rotate(0deg);
+                opacity: 0.5;
             }
 
             50% {
-                box-shadow: 0 25px 60px -12px rgba(102, 126, 234, 0.5);
+                transform: translateY(-30px) rotate(180deg);
+                opacity: 0.8;
             }
         }
 
-        .queue-number-display {
-            font-size: 8rem;
+        .container {
+            position: relative;
+            z-index: 1;
+            padding: 30px 40px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo-icon {
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+        }
+
+        .logo-text h1 {
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .logo-text p {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .datetime {
+            text-align: right;
+        }
+
+        .time {
+            font-size: 48px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #00f5a0, #00d9f5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .date {
+            font-size: 18px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* Stats */
+        .stats {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 25px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .stat-card.waiting {
+            border-left: 4px solid #ffc107;
+        }
+
+        .stat-card.current {
+            border-left: 4px solid #00f5a0;
+        }
+
+        .stat-card.done {
+            border-left: 4px solid #667eea;
+        }
+
+        .stat-number {
+            font-size: 48px;
             font-weight: 800;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            line-height: 1;
+        }
+
+        .stat-card.waiting .stat-number {
+            color: #ffc107;
+        }
+
+        .stat-card.current .stat-number {
+            color: #00f5a0;
+        }
+
+        .stat-card.done .stat-number {
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 10px;
+        }
+
+        /* Main Content */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 30px;
+            flex: 1;
+        }
+
+        /* Current Queue */
+        .current-queue {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 30px;
+            padding: 50px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .current-queue.calling {
+            animation: pulse-border 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse-border {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(0, 245, 160, 0.4);
+            }
+
+            50% {
+                box-shadow: 0 0 0 20px rgba(0, 245, 160, 0);
+            }
+        }
+
+        .current-label {
+            font-size: 20px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+        }
+
+        .current-number {
+            font-size: 180px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #00f5a0, #00d9f5);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
             line-height: 1;
+            text-shadow: 0 0 60px rgba(0, 245, 160, 0.3);
         }
 
-        .patient-name-display {
-            font-size: 2.5rem;
-            color: #374151;
+        .current-patient {
+            font-size: 36px;
             font-weight: 600;
+            margin-top: 20px;
+            color: #fff;
         }
 
-        .doctor-name-display {
-            font-size: 1.5rem;
-            color: #6b7280;
-        }
-
-        .waiting-list-card {
-            background: rgba(255, 255, 255, 0.9);
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
-        }
-
-        .waiting-item {
-            padding: 15px 20px;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-            transition: all 0.3s ease;
-        }
-
-        .waiting-item:last-child {
-            border-bottom: none;
-        }
-
-        .waiting-item:hover {
-            background: rgba(102, 126, 234, 0.1);
-        }
-
-        .waiting-number {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #667eea;
-            width: 80px;
-        }
-
-        .waiting-name {
-            font-size: 1.2rem;
-            color: #374151;
-        }
-
-        .clock-display {
-            font-size: 3rem;
-            font-weight: 300;
-            color: white;
-            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-        }
-
-        .date-display {
-            font-size: 1.2rem;
-            color: rgba(255, 255, 255, 0.9);
-        }
-
-        .stats-card {
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 15px;
-            backdrop-filter: blur(10px);
-            padding: 20px;
-            text-align: center;
-            color: white;
-        }
-
-        .stats-number {
-            font-size: 2.5rem;
-            font-weight: 700;
-        }
-
-        .stats-label {
-            font-size: 0.9rem;
-            opacity: 0.9;
+        .current-doctor {
+            font-size: 20px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
         }
 
         .no-queue {
-            color: rgba(255, 255, 255, 0.8);
+            color: rgba(255, 255, 255, 0.5);
         }
 
-        .calling-animation {
-            animation: calling 0.5s ease-in-out infinite;
+        .no-queue i {
+            font-size: 80px;
+            margin-bottom: 20px;
+            display: block;
         }
 
-        @keyframes calling {
+        /* Waiting List */
+        .waiting-list {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 30px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
 
-            0%,
-            100% {
-                transform: scale(1);
+        .waiting-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            padding: 25px 30px;
+        }
+
+        .waiting-header h2 {
+            font-size: 22px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .waiting-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        .waiting-item {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 15px;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .waiting-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateX(5px);
+        }
+
+        .waiting-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .waiting-num {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.3), rgba(118, 75, 162, 0.3));
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 800;
+            color: #fff;
+            margin-right: 20px;
+        }
+
+        .waiting-info h3 {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .waiting-info p {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .empty-list {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: rgba(255, 255, 255, 0.5);
+            text-align: center;
+            padding: 40px;
+        }
+
+        .empty-list i {
+            font-size: 60px;
+            margin-bottom: 15px;
+            color: #00f5a0;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 16px;
+        }
+
+        /* Animations */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
             }
 
-            50% {
-                transform: scale(1.02);
+            to {
+                opacity: 1;
+                transform: translateY(0);
             }
+        }
+
+        .animate-in {
+            animation: slideIn 0.5s ease forwards;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
         }
     </style>
-@endpush
+</head>
 
-@section('content')
-    <div class="queue-display-container p-4">
-        <div class="container-fluid">
-            <!-- Header with Clock -->
-            <div class="row mb-4">
-                <div class="col-md-6">
-                    <h1 class="text-white mb-0" style="font-size: 2.5rem; font-weight: 600;">
-                        <i class="uil uil-clinic-medical me-2"></i>Antrian Pasien
-                    </h1>
+<body>
+    <!-- Background Animation -->
+    <div class="bg-animation">
+        <div class="circle"></div>
+        <div class="circle"></div>
+        <div class="circle"></div>
+        <div class="circle"></div>
+    </div>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="uil uil-clinic-medical"></i>
                 </div>
-                <div class="col-md-6 text-md-end">
-                    <div class="clock-display" id="liveClock">--:--:--</div>
-                    <div class="date-display" id="liveDate">--</div>
+                <div class="logo-text">
+                    <h1>Klinik</h1>
+                    <p>Sistem Antrian Digital</p>
                 </div>
             </div>
-
-            <!-- Stats Cards -->
-            <div class="row mb-4">
-                <div class="col-md-4">
-                    <div class="stats-card">
-                        <div class="stats-number">{{ $waiting->count() }}</div>
-                        <div class="stats-label"><i class="uil uil-users-alt me-1"></i>Menunggu</div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="stats-card">
-                        <div class="stats-number">{{ $current ? 1 : 0 }}</div>
-                        <div class="stats-label"><i class="uil uil-user-check me-1"></i>Sedang Dipanggil</div>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="stats-card">
-                        <div class="stats-number">{{ $completed }}</div>
-                        <div class="stats-label"><i class="uil uil-check-circle me-1"></i>Selesai</div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="row">
-                <!-- Current Queue -->
-                <div class="col-lg-7 mb-4">
-                    <div class="current-queue-card p-5 text-center h-100 d-flex flex-column justify-content-center"
-                        id="currentQueueCard">
-                        @if($current)
-                            <div>
-                                <p class="text-muted mb-2" style="font-size: 1.2rem;">Nomor Antrian Saat Ini</p>
-                                <div class="queue-number-display mb-3" id="currentQueueNumber">
-                                    {{ preg_replace('/^\d{8}-/', '', $current->queue_number) }}
-                                </div>
-                                <div class="patient-name-display mb-2" id="currentPatientName">
-                                    {{ $current->patient->name }}
-                                </div>
-                                <div class="doctor-name-display">
-                                    <i class="uil uil-user-md me-1"></i>{{ $current->doctor->name ?? 'Dokter' }}
-                                </div>
-                            </div>
-                        @else
-                            <div class="no-queue py-5">
-                                <i class="uil uil-clock-three" style="font-size: 5rem; color: #9ca3af;"></i>
-                                <p class="mt-3" style="font-size: 1.5rem; color: #6b7280;">Belum ada antrian yang dipanggil</p>
-                            </div>
-                        @endif
-                    </div>
-                </div>
-
-                <!-- Waiting List -->
-                <div class="col-lg-5 mb-4">
-                    <div class="waiting-list-card h-100" style="max-height: 500px; overflow: hidden;">
-                        <div class="p-4 border-bottom"
-                            style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px 20px 0 0;">
-                            <h4 class="text-white mb-0">
-                                <i class="uil uil-list-ul me-2"></i>Antrian Berikutnya
-                            </h4>
-                        </div>
-                        <div style="max-height: 400px; overflow-y: auto;" id="waitingList">
-                            @forelse($waiting->take(10) as $index => $apt)
-                                <div class="waiting-item d-flex align-items-center" data-queue="{{ $apt->queue_number }}">
-                                    <span class="waiting-number">{{ preg_replace('/^\d{8}-/', '', $apt->queue_number) }}</span>
-                                    <div>
-                                        <div class="waiting-name">{{ $apt->patient->name }}</div>
-                                        <small class="text-muted">{{ $apt->doctor->name ?? '' }}</small>
-                                    </div>
-                                </div>
-                            @empty
-                                <div class="text-center py-5">
-                                    <i class="uil uil-check-circle" style="font-size: 3rem; color: #10b981;"></i>
-                                    <p class="text-muted mt-2">Tidak ada antrian menunggu</p>
-                                </div>
-                            @endforelse
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Footer -->
-            <div class="text-center text-white mt-3">
-                <p style="opacity: 0.8;">Silakan tunggu nomor antrian Anda dipanggil</p>
+            <div class="datetime">
+                <div class="time" id="liveClock">--:--:--</div>
+                <div class="date" id="liveDate">--</div>
             </div>
         </div>
-    </div>
-@endsection
 
-@push('scripts')
+        <!-- Stats -->
+        <div class="stats">
+            <div class="stat-card waiting">
+                <div class="stat-number" id="waitingCount">{{ $waiting->count() }}</div>
+                <div class="stat-label"><i class="uil uil-users-alt"></i> Menunggu</div>
+            </div>
+            <div class="stat-card current">
+                <div class="stat-number" id="currentCount">{{ $current ? 1 : 0 }}</div>
+                <div class="stat-label"><i class="uil uil-user-check"></i> Sedang Dipanggil</div>
+            </div>
+            <div class="stat-card done">
+                <div class="stat-number" id="doneCount">{{ $completed }}</div>
+                <div class="stat-label"><i class="uil uil-check-circle"></i> Selesai</div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Current Queue -->
+            <div class="current-queue" id="currentQueueCard">
+                @if($current)
+                    <div class="current-label">Nomor Antrian Saat Ini</div>
+                    <div class="current-number" id="currentNumber">
+                        {{ preg_replace('/^\d{8}-/', '', $current->queue_number) }}</div>
+                    <div class="current-patient" id="currentPatient">{{ $current->patient->name }}</div>
+                    <div class="current-doctor" id="currentDoctor">
+                        <i class="uil uil-user-md"></i>
+                        {{ $current->doctor->name ?? 'Dokter' }}
+                    </div>
+                @else
+                    <div class="no-queue">
+                        <i class="uil uil-clock-three"></i>
+                        <div class="current-label">Belum Ada Antrian</div>
+                        <p style="margin-top: 10px; font-size: 18px;">Silakan tunggu panggilan</p>
+                    </div>
+                @endif
+            </div>
+
+            <!-- Waiting List -->
+            <div class="waiting-list">
+                <div class="waiting-header">
+                    <h2><i class="uil uil-list-ul"></i> Antrian Berikutnya</h2>
+                </div>
+                <div class="waiting-body" id="waitingList">
+                    @forelse($waiting->take(8) as $index => $apt)
+                        <div class="waiting-item animate-in" style="animation-delay: {{ $index * 0.1 }}s"
+                            data-queue="{{ $apt->queue_number }}">
+                            <div class="waiting-num">{{ preg_replace('/^\d{8}-/', '', $apt->queue_number) }}</div>
+                            <div class="waiting-info">
+                                <h3>{{ $apt->patient->name }}</h3>
+                                <p><i class="uil uil-user-md"></i> {{ $apt->doctor->name ?? '' }}</p>
+                            </div>
+                        </div>
+                    @empty
+                        <div class="empty-list">
+                            <i class="uil uil-check-circle"></i>
+                            <p>Tidak ada antrian menunggu</p>
+                        </div>
+                    @endforelse
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>Silakan tunggu nomor antrian Anda dipanggil • Terima kasih atas kesabaran Anda</p>
+        </div>
+    </div>
+
     <script src="{{ asset('js/queue-voice.js') }}"></script>
     <script>
-        // Initialize Queue Voice
+        // Initialize
         QueueVoice.init();
 
-        // Live clock
+        // Live Clock
         function updateClock() {
             const now = new Date();
-            const timeStr = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            const dateStr = now.toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-
-            document.getElementById('liveClock').textContent = timeStr;
-            document.getElementById('liveDate').textContent = dateStr;
+            const time = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const date = now.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+            document.getElementById('liveClock').textContent = time;
+            document.getElementById('liveDate').textContent = date;
         }
-
         updateClock();
         setInterval(updateClock, 1000);
 
-        // Store last known queue for comparison
+        // Track last queue
         let lastQueueId = {{ $current ? $current->id : 'null' }};
 
-        // Auto-refresh and check for new calls
-        function checkForUpdates() {
+        // Check for updates
+        function checkUpdates() {
             fetch('{{ route('clinic.appointments.waiting', app()->getLocale()) }}')
-                .then(response => response.json())
+                .then(r => r.json())
                 .then(data => {
                     if (data.success) {
-                        // Check if there's a new call
-                        if (data.in_progress && data.in_progress.length > 0) {
-                            const currentQueue = data.in_progress[0];
-                            if (lastQueueId !== currentQueue.id) {
-                                // New queue called! Speak it
-                                QueueVoice.speak(
-                                    currentQueue.queue_number,
-                                    currentQueue.patient?.name || 'Pasien',
-                                    currentQueue.doctor?.name || ''
-                                );
+                        // Update stats
+                        document.getElementById('waitingCount').textContent = data.waiting_count;
+                        document.getElementById('currentCount').textContent = data.in_progress_count;
 
-                                // Update display
-                                updateCurrentQueue(currentQueue);
-                                lastQueueId = currentQueue.id;
+                        // Check new call
+                        if (data.in_progress && data.in_progress.length > 0) {
+                            const current = data.in_progress[0];
+                            if (lastQueueId !== current.id) {
+                                lastQueueId = current.id;
+                                updateCurrentDisplay(current);
 
                                 // Add calling animation
-                                document.getElementById('currentQueueCard').classList.add('calling-animation');
-                                setTimeout(() => {
-                                    document.getElementById('currentQueueCard').classList.remove('calling-animation');
-                                }, 5000);
+                                const card = document.getElementById('currentQueueCard');
+                                card.classList.add('calling');
+                                setTimeout(() => card.classList.remove('calling'), 5000);
+
+                                // Speak
+                                QueueVoice.speak(
+                                    current.queue_number,
+                                    current.patient?.name || 'Pasien',
+                                    current.doctor?.name || ''
+                                );
                             }
                         }
 
@@ -291,52 +585,51 @@
                         updateWaitingList(data.waiting);
                     }
                 })
-                .catch(error => console.error('Error checking updates:', error));
+                .catch(e => console.error('Error:', e));
         }
 
-        function updateCurrentQueue(queue) {
-            const card = document.getElementById('currentQueueCard');
+        function updateCurrentDisplay(queue) {
             const queueNum = queue.queue_number.replace(/^\d{8}-/, '');
-
-            card.innerHTML = `
-                <div>
-                    <p class="text-muted mb-2" style="font-size: 1.2rem;">Nomor Antrian Saat Ini</p>
-                    <div class="queue-number-display mb-3" id="currentQueueNumber">${queueNum}</div>
-                    <div class="patient-name-display mb-2" id="currentPatientName">${queue.patient?.name || 'Pasien'}</div>
-                    <div class="doctor-name-display">
-                        <i class="uil uil-user-md me-1"></i>${queue.doctor?.name || 'Dokter'}
-                    </div>
+            document.getElementById('currentQueueCard').innerHTML = `
+                <div class="current-label">Nomor Antrian Saat Ini</div>
+                <div class="current-number" id="currentNumber">${queueNum}</div>
+                <div class="current-patient" id="currentPatient">${queue.patient?.name || 'Pasien'}</div>
+                <div class="current-doctor" id="currentDoctor">
+                    <i class="uil uil-user-md"></i>
+                    ${queue.doctor?.name || 'Dokter'}
                 </div>
             `;
         }
 
         function updateWaitingList(waiting) {
             const list = document.getElementById('waitingList');
-            if (waiting.length === 0) {
+            if (!waiting || waiting.length === 0) {
                 list.innerHTML = `
-                    <div class="text-center py-5">
-                        <i class="uil uil-check-circle" style="font-size: 3rem; color: #10b981;"></i>
-                        <p class="text-muted mt-2">Tidak ada antrian menunggu</p>
+                    <div class="empty-list">
+                        <i class="uil uil-check-circle"></i>
+                        <p>Tidak ada antrian menunggu</p>
                     </div>
                 `;
                 return;
             }
 
-            list.innerHTML = waiting.slice(0, 10).map(apt => {
-                const queueNum = apt.queue_number.replace(/^\d{8}-/, '');
+            list.innerHTML = waiting.slice(0, 8).map((apt, i) => {
+                const num = apt.queue_number.replace(/^\d{8}-/, '');
                 return `
-                    <div class="waiting-item d-flex align-items-center" data-queue="${apt.queue_number}">
-                        <span class="waiting-number">${queueNum}</span>
-                        <div>
-                            <div class="waiting-name">${apt.patient?.name || 'Pasien'}</div>
-                            <small class="text-muted">${apt.doctor?.name || ''}</small>
+                    <div class="waiting-item animate-in" style="animation-delay: ${i * 0.1}s">
+                        <div class="waiting-num">${num}</div>
+                        <div class="waiting-info">
+                            <h3>${apt.patient?.name || 'Pasien'}</h3>
+                            <p><i class="uil uil-user-md"></i> ${apt.doctor?.name || ''}</p>
                         </div>
                     </div>
                 `;
             }).join('');
         }
 
-        // Check for updates every 5 seconds
-        setInterval(checkForUpdates, 5000);
+        // Auto refresh every 5 seconds
+        setInterval(checkUpdates, 5000);
     </script>
-@endpush
+</body>
+
+</html>

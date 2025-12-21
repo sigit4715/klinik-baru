@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Validator;
 use Auth;
 use App\Models\User;
+use Laravel\Socialite\Facades\Socialite;
 
 class AuthController extends Controller
 {
@@ -90,6 +91,50 @@ class AuthController extends Controller
             } else {
                 return redirect()->route('login')->with('message', 'Login failed !Email/Password is incorrect !');
             }
+        }
+    }
+
+    /**
+     * Redirect to Google OAuth
+     *
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function redirectToGoogle()
+    {
+        return Socialite::driver('google')->redirect();
+    }
+
+    /**
+     * Handle Google OAuth callback
+     * Only allow login if email is already registered
+     *
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function handleGoogleCallback()
+    {
+        try {
+            $googleUser = Socialite::driver('google')->user();
+
+            // Check if user exists in database
+            $user = User::where('email', $googleUser->getEmail())->first();
+
+            if (!$user) {
+                // Email not registered, reject login
+                return redirect()->route('login')->with('message', 'Email ' . $googleUser->getEmail() . ' belum terdaftar di sistem. Silakan hubungi admin untuk didaftarkan terlebih dahulu.');
+            }
+
+            // Check if user is active
+            if (isset($user->is_active) && !$user->is_active) {
+                return redirect()->route('login')->with('message', 'Akun Anda tidak aktif. Silakan hubungi admin.');
+            }
+
+            // Login the user
+            Auth::login($user);
+
+            return redirect()->intended(route('clinic.dashboard', 'en'))->with('message', 'Selamat datang kembali, ' . $user->name . '!');
+
+        } catch (\Exception $e) {
+            return redirect()->route('login')->with('message', 'Terjadi kesalahan saat login dengan Google. Silakan coba lagi.');
         }
     }
 
