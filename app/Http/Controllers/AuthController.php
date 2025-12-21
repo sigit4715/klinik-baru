@@ -149,6 +149,14 @@ class AuthController extends Controller
                 return redirect()->route('login')->with('message', 'Akun Anda belum diaktifkan oleh admin. Silakan tunggu verifikasi atau hubungi admin.');
             }
 
+            // Update avatar and google_id if not set (for users registered before this feature)
+            if (!$user->avatar || !$user->google_id) {
+                $user->update([
+                    'avatar' => $googleUser->getAvatar(),
+                    'google_id' => $googleUser->getId(),
+                ]);
+            }
+
             // Login the user
             Auth::login($user);
 
