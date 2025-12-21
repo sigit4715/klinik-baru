@@ -49,6 +49,7 @@ class AuthController extends Controller
 
     /**
      * make the user able to register
+     * New users are inactive until admin approves
      *
      * @return 
      */
@@ -57,7 +58,7 @@ class AuthController extends Controller
         $validators = Validator::make($request->all(), [
             'name' => 'required',
             'email' => 'required|email|unique:users',
-            'password' => 'required'
+            'password' => 'required|min:6'
         ]);
         if ($validators->fails()) {
             return redirect()->route('register')->withErrors($validators)->withInput();
@@ -66,14 +67,17 @@ class AuthController extends Controller
             $user->name = $request->name;
             $user->email = $request->email;
             $user->password = bcrypt($request->password);
+            $user->is_active = false; // Inactive until admin approves
+            $user->role = 'staff';
             $user->save();
-            auth()->login($user);
-            return redirect()->intended(route('clinic.dashboard', 'en'))->with('message', 'Registration was successfull !');
+
+            return redirect()->route('login')->with('message', 'Pendaftaran berhasil! Akun Anda sedang menunggu verifikasi dari admin. Silakan hubungi admin untuk mengaktifkan akun.');
         }
     }
 
     /**
      * make the user able to login
+     * Check if user is active before allowing login
      *
      * @return 
      */
@@ -85,12 +89,19 @@ class AuthController extends Controller
         ]);
         if ($validators->fails()) {
             return redirect()->route('login')->withErrors($validators)->withInput();
+        }
+
+        // Check if user exists and is active
+        $user = User::where('email', $request->email)->first();
+
+        if ($user && !$user->is_active) {
+            return redirect()->route('login')->with('message', 'Akun Anda belum diaktifkan oleh admin. Silakan tunggu verifikasi dari admin.');
+        }
+
+        if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
+            return redirect()->intended(route('clinic.dashboard', 'en'))->with('message', 'Selamat datang kembali!');
         } else {
-            if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
-                return redirect()->intended(route('clinic.dashboard', 'en'))->with('message', 'Welcome back !');
-            } else {
-                return redirect()->route('login')->with('message', 'Login failed !Email/Password is incorrect !');
-            }
+            return redirect()->route('login')->with('message', 'Login gagal! Email atau password salah.');
         }
     }
 
@@ -106,7 +117,7 @@ class AuthController extends Controller
 
     /**
      * Handle Google OAuth callback
-     * Only allow login if email is already registered
+     * Auto-register new users but set as inactive until admin approves
      *
      * @return \Illuminate\Http\RedirectResponse
      */
@@ -119,13 +130,22 @@ class AuthController extends Controller
             $user = User::where('email', $googleUser->getEmail())->first();
 
             if (!$user) {
-                // Email not registered, reject login
-                return redirect()->route('login')->with('message', 'Email ' . $googleUser->getEmail() . ' belum terdaftar di sistem. Silakan hubungi admin untuk didaftarkan terlebih dahulu.');
+                // Auto-register new user with inactive status
+                $user = User::create([
+                    'name' => $googleUser->getName(),
+                    'email' => $googleUser->getEmail(),
+                    'password' => bcrypt(uniqid()), // Random password
+                    'is_active' => false, // Inactive until admin approves
+                    'role' => 'staff',
+                    'google_id' => $googleUser->getId(),
+                ]);
+
+                return redirect()->route('login')->with('message', 'Pendaftaran berhasil menggunakan Google! Akun Anda (' . $googleUser->getEmail() . ') sedang menunggu verifikasi dari admin. Anda akan dapat login setelah admin mengaktifkan akun Anda.');
             }
 
-            // Check if user is active
-            if (isset($user->is_active) && !$user->is_active) {
-                return redirect()->route('login')->with('message', 'Akun Anda tidak aktif. Silakan hubungi admin.');
+            // User exists, check if active
+            if (!$user->is_active) {
+                return redirect()->route('login')->with('message', 'Akun Anda belum diaktifkan oleh admin. Silakan tunggu verifikasi atau hubungi admin.');
             }
 
             // Login the user
@@ -146,6 +166,6 @@ class AuthController extends Controller
     public function logout()
     {
         Auth::logout();
-        return redirect()->route('login')->with('message', 'Successfully Logged out !');
+        return redirect()->route('login')->with('message', 'Anda berhasil logout!');
     }
 }
