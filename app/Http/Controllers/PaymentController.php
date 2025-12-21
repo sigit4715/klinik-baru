@@ -98,6 +98,14 @@ class PaymentController extends Controller
             return redirect()->back()->withErrors($validators)->withInput();
         }
 
+        // Process items to ensure subtotal is calculated correctly
+        $items = $request->items ?? [];
+        foreach ($items as $key => $item) {
+            $qty = floatval($item['qty'] ?? 1);
+            $price = floatval($item['price'] ?? 0);
+            $items[$key]['subtotal'] = $qty * $price;
+        }
+
         $payment = new Payment();
         $payment->invoice_number = Payment::generateInvoiceNumber();
         $payment->appointment_id = $request->appointment_id;
@@ -106,9 +114,11 @@ class PaymentController extends Controller
         $payment->discount = $request->discount ?? 0;
         $payment->tax = $request->tax ?? 0;
         $payment->total = $request->total;
+        $payment->cash_received = $request->cash_received ?? 0;
+        $payment->change_amount = max(0, ($request->cash_received ?? 0) - $request->total);
         $payment->payment_method = $request->payment_method;
         $payment->status = 'paid';
-        $payment->items = $request->items ?? [];
+        $payment->items = $items;
         $payment->save();
 
         return redirect()->route('clinic.payments.show', [app()->getLocale(), $payment->id])

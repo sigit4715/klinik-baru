@@ -13,16 +13,31 @@ use App\Models\Service;
 
 class MedicalRecordController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $per_page = session('pagination_per_page') ?? 20;
-        $records = MedicalRecord::with(['patient', 'doctor', 'appointment'])
-            ->orderBy('id', 'DESC')
-            ->paginate($per_page);
+        $query = Patient::whereHas('medicalRecords')
+            ->withCount('medicalRecords')
+            ->with([
+                'medicalRecords' => function ($q) {
+                    $q->latest()->limit(1);
+                }
+            ]);
+
+        // Search functionality
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('no_rm', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%");
+            });
+        }
+
+        $patients = $query->orderBy('updated_at', 'DESC')->paginate(10)->withQueryString();
         $title = "Rekam Medis";
         $description = "Kelola rekam medis pasien";
 
-        return view('pages.clinic.medical-records.index', compact('title', 'description', 'records'));
+        return view('pages.clinic.medical-records.index', compact('title', 'description', 'patients'));
     }
 
     public function create($language, $appointmentId = null)

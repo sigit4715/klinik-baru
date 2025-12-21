@@ -1006,11 +1006,17 @@
             <li class="nav-author">
                 <div class="dropdown-custom">
                     <a href="javascript:;" class="nav-item-toggle">
-                        <div class="avatar avatar-circle avatar-sm bg-primary text-white d-flex align-items-center justify-content-center"
-                            style="width: 32px; height: 32px;">
-                            <span
-                                style="font-size: 14px; font-weight: 600;">{{ Auth::check() ? strtoupper(substr(Auth::user()->name, 0, 1)) : 'U' }}</span>
-                        </div>
+                        @if(Auth::check() && Auth::user()->avatar)
+                            <img src="{{ Auth::user()->avatar }}" alt="{{ Auth::user()->name }}"
+                                class="avatar avatar-circle avatar-sm"
+                                style="width: 32px; height: 32px; object-fit: cover;">
+                        @else
+                            <div class="avatar avatar-circle avatar-sm bg-primary text-white d-flex align-items-center justify-content-center"
+                                style="width: 32px; height: 32px;">
+                                <span
+                                    style="font-size: 14px; font-weight: 600;">{{ Auth::check() ? strtoupper(substr(Auth::user()->name, 0, 1)) : 'U' }}</span>
+                            </div>
+                        @endif
                         @if(Auth::check())
                             <span class="nav-item__title">{{ Auth::user()->name }}<i
                                     class="las la-angle-down nav-item__arrow"></i></span>
@@ -1019,11 +1025,16 @@
                     <div class="dropdown-wrapper">
                         <div class="nav-author__info">
                             <div class="author-img">
-                                <div class="avatar avatar-circle bg-primary text-white d-flex align-items-center justify-content-center"
-                                    style="width: 50px; height: 50px;">
-                                    <span
-                                        style="font-size: 20px; font-weight: 600;">{{ Auth::check() ? strtoupper(substr(Auth::user()->name, 0, 1)) : 'U' }}</span>
-                                </div>
+                                @if(Auth::check() && Auth::user()->avatar)
+                                    <img src="{{ Auth::user()->avatar }}" alt="{{ Auth::user()->name }}"
+                                        class="avatar avatar-circle" style="width: 50px; height: 50px; object-fit: cover;">
+                                @else
+                                    <div class="avatar avatar-circle bg-primary text-white d-flex align-items-center justify-content-center"
+                                        style="width: 50px; height: 50px;">
+                                        <span
+                                            style="font-size: 20px; font-weight: 600;">{{ Auth::check() ? strtoupper(substr(Auth::user()->name, 0, 1)) : 'U' }}</span>
+                                    </div>
+                                @endif
                             </div>
                             <div>
                                 @if(Auth::check())

@@ -194,7 +194,8 @@
                     <div class="item-name">{{ $item['name'] ?? 'Item' }}</div>
                     <div class="item-detail">
                         <span>{{ $item['qty'] ?? 1 }} x Rp {{ number_format($item['price'] ?? 0, 0, ',', '.') }}</span>
-                        <span>Rp {{ number_format($item['subtotal'] ?? 0, 0, ',', '.') }}</span>
+                        <span>Rp
+                            {{ number_format(($item['subtotal'] ?? 0) > 0 ? $item['subtotal'] : (($item['qty'] ?? 1) * ($item['price'] ?? 0)), 0, ',', '.') }}</span>
                     </div>
                 </div>
             @endforeach
@@ -225,6 +226,17 @@
             <span>TOTAL</span>
             <span>Rp {{ number_format($payment->total, 0, ',', '.') }}</span>
         </div>
+        @if(($payment->cash_received ?? 0) > 0)
+            <div class="divider" style="margin: 8px 0;"></div>
+            <div class="info-row">
+                <span>Tunai</span>
+                <span>Rp {{ number_format($payment->cash_received, 0, ',', '.') }}</span>
+            </div>
+            <div class="info-row" style="font-weight: bold;">
+                <span>Kembali</span>
+                <span>Rp {{ number_format($payment->change_amount ?? 0, 0, ',', '.') }}</span>
+            </div>
+        @endif
     </div>
 
     <div class="divider"></div>

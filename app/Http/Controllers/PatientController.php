@@ -8,10 +8,37 @@ use App\Models\Patient;
 
 class PatientController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $per_page = session('pagination_per_page') ?? 20;
-        $patients = Patient::orderBy('id', 'DESC')->paginate($per_page);
+        $query = Patient::query();
+
+        // Search functionality
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('no_rm', 'like', "%{$search}%")
+                    ->orWhere('nik', 'like', "%{$search}%")
+                    ->orWhere('phone', 'like', "%{$search}%");
+            });
+        }
+
+        // Address filter
+        if ($request->has('address') && $request->address != '') {
+            $query->where('address', 'like', "%{$request->address}%");
+        }
+
+        // Gender filter
+        if ($request->has('gender') && $request->gender != '') {
+            $query->where('gender', $request->gender);
+        }
+
+        // Blood type filter
+        if ($request->has('blood_type') && $request->blood_type != '') {
+            $query->where('blood_type', $request->blood_type);
+        }
+
+        $patients = $query->orderBy('id', 'DESC')->paginate(10)->withQueryString();
         $title = "Daftar Pasien";
         $description = "Kelola data pasien klinik";
 
@@ -34,10 +61,10 @@ class PatientController extends Controller
             'gender' => 'required|in:L,P',
             'birth_date' => 'required|date',
             'birth_place' => 'required|string|max:100',
-            'phone' => 'required|string|max:20',
+            'phone' => 'nullable|string|max:20',
             'address' => 'required|string',
-            'emergency_contact' => 'required|string|max:100',
-            'emergency_phone' => 'required|string|max:20',
+            'emergency_contact' => 'nullable|string|max:100',
+            'emergency_phone' => 'nullable|string|max:20',
         ]);
 
         if ($validators->fails()) {
@@ -54,7 +81,7 @@ class PatientController extends Controller
         $patient->birth_place = $request->birth_place;
         $patient->phone = $request->phone;
         $patient->email = $request->email;
-        $patient->address = $request->address;
+        $patient->address = $request->full_address ?: $request->address;
         $patient->blood_type = $request->blood_type;
         $patient->allergy = $request->allergy;
         $patient->emergency_contact = $request->emergency_contact;

@@ -1,6 +1,46 @@
 @section('title', $title)
 @section('description', $description)
 @extends('layout.app')
+
+@push('css')
+    <style>
+        .filter-section {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin-bottom: 20px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .filter-section .form-select,
+        .filter-section .form-control {
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+            font-size: 14px;
+        }
+
+        .filter-section .btn {
+            border-radius: 8px;
+        }
+
+        .search-box {
+            background: white;
+            border-radius: 10px;
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            border: 1px solid #e5e7eb;
+        }
+
+        .search-box input {
+            border: none;
+            outline: none;
+            width: 200px;
+            font-size: 14px;
+        }
+    </style>
+@endpush
+
 @section('content')
     <div class="container-fluid">
         <div class="breadcrumb-main add-contact justify-content-sm-between">
@@ -17,6 +57,58 @@
                             class="uil uil-exclamation-triangle me-1"></i>Stok Rendah ({{ $lowStockCount }})</a>
                 @endif
             </div>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="filter-section">
+            <form action="{{ route('clinic.medicines.index', app()->getLocale()) }}" method="GET">
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label small text-muted mb-1">Pencarian</label>
+                        <div class="search-box">
+                            <i class="uil uil-search text-muted me-2"></i>
+                            <input type="search" name="search" placeholder="Cari nama/kode..."
+                                value="{{ request('search') }}">
+                        </div>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small text-muted mb-1">Kategori</label>
+                        <select name="category" class="form-select">
+                            <option value="">Semua Kategori</option>
+                            @foreach($categories as $cat)
+                                <option value="{{ $cat }}" {{ request('category') == $cat ? 'selected' : '' }}>{{ $cat }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small text-muted mb-1">Status Stok</label>
+                        <select name="stock_status" class="form-select">
+                            <option value="">Semua</option>
+                            <option value="normal" {{ request('stock_status') == 'normal' ? 'selected' : '' }}>Stok Normal
+                            </option>
+                            <option value="low" {{ request('stock_status') == 'low' ? 'selected' : '' }}>Stok Rendah</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label small text-muted mb-1">Status</label>
+                        <select name="status" class="form-select">
+                            <option value="">Semua Status</option>
+                            <option value="active" {{ request('status') == 'active' ? 'selected' : '' }}>Aktif</option>
+                            <option value="inactive" {{ request('status') == 'inactive' ? 'selected' : '' }}>Tidak Aktif
+                            </option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="uil uil-filter me-1"></i>Filter
+                        </button>
+                        <a href="{{ route('clinic.medicines.index', app()->getLocale()) }}"
+                            class="btn btn-outline-secondary">
+                            <i class="uil uil-redo me-1"></i>Reset
+                        </a>
+                    </div>
+                </div>
+            </form>
         </div>
 
         @if(session('success'))
@@ -89,7 +181,12 @@
                         </tbody>
                     </table>
                 </div>
-                {{ $medicines->links('pagination::bootstrap-5') }}
+
+                @if($medicines->hasPages())
+                    <div class="d-flex justify-content-end pt-3">
+                        {{ $medicines->links('pagination::bootstrap-5') }}
+                    </div>
+                @endif
             </div>
         </div>
     </div>

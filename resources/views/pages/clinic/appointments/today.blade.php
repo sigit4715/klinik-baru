@@ -58,9 +58,16 @@
 
 @section('content')
     <div class="container-fluid">
-        <div class="breadcrumb-main">
-            <h4 class="breadcrumb-title">{{ $title }}</h4>
-            <div class="d-flex gap-2">
+        <div class="breadcrumb-main d-flex justify-content-between align-items-center flex-wrap gap-3 mb-4">
+            <h4 class="breadcrumb-title mb-0">{{ $title }}</h4>
+            <div class="d-flex gap-2 align-items-center flex-wrap">
+                <form action="{{ route('clinic.appointments.today', app()->getLocale()) }}" method="GET"
+                    class="d-flex align-items-center bg-white rounded-pill px-3 py-2 shadow-sm"
+                    style="border: 1px solid #e5e7eb;">
+                    <i class="uil uil-search text-muted me-2"></i>
+                    <input type="search" name="search" placeholder="Cari nama/No.RM..." value="{{ request('search') }}"
+                        class="border-0" style="outline: none; width: 180px;">
+                </form>
                 <a href="{{ route('clinic.appointments.display', app()->getLocale()) }}" class="btn btn-outline-primary"
                     target="_blank">
                     <i class="uil uil-tv-retro me-1"></i>Buka Display TV
@@ -138,9 +145,13 @@
                                                             class="btn btn-sm btn-warning">
                                                             <i class="uil uil-receipt"></i> Pembayaran
                                                         </a>
-                                                    @else
+                                                    @elseif($apt->status == 'completed' && $apt->payment)
+                                                        <a href="{{ route('clinic.payments.receipt', [app()->getLocale(), $apt->payment->id]) }}"
+                                                            class="btn btn-sm btn-success" target="_blank" title="Cetak Struk">
+                                                            <i class="uil uil-receipt"></i> Struk
+                                                        </a>
                                                         <a href="{{ route('clinic.appointments.show', [app()->getLocale(), $apt->id]) }}"
-                                                            class="btn btn-sm btn-outline-info">
+                                                            class="btn btn-sm btn-outline-info" title="Detail">
                                                             <i class="uil uil-eye"></i> Detail
                                                         </a>
                                                     @endif

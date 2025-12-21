@@ -17,6 +17,8 @@ class Payment extends Model
         'discount',
         'tax',
         'total',
+        'cash_received',
+        'change_amount',
         'payment_method',
         'status',
         'items',

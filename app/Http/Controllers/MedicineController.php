@@ -8,16 +8,44 @@ use App\Models\Medicine;
 
 class MedicineController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $per_page = session('pagination_per_page') ?? 20;
-        $medicines = Medicine::orderBy('id', 'DESC')->paginate($per_page);
+        $query = Medicine::query();
+
+        // Search functionality
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('code', 'like', "%{$search}%");
+            });
+        }
+
+        // Advanced filters
+        if ($request->has('category') && $request->category != '') {
+            $query->where('category', $request->category);
+        }
+
+        if ($request->has('stock_status') && $request->stock_status != '') {
+            if ($request->stock_status == 'low') {
+                $query->whereRaw('stock <= min_stock');
+            } elseif ($request->stock_status == 'normal') {
+                $query->whereRaw('stock > min_stock');
+            }
+        }
+
+        if ($request->has('status') && $request->status != '') {
+            $query->where('status', $request->status);
+        }
+
+        $medicines = $query->orderBy('id', 'DESC')->paginate(10)->withQueryString();
         $lowStockCount = Medicine::lowStock()->count();
         $expiringCount = Medicine::expiringSoon(30)->count();
+        $categories = ['Tablet', 'Kapsul', 'Sirup', 'Injeksi', 'Salep', 'Tetes', 'Suppositoria', 'Cairan', 'Alkes', 'Inhaler', 'Lainnya'];
         $title = "Daftar Obat";
         $description = "Kelola inventaris obat klinik";
 
-        return view('pages.clinic.medicines.index', compact('title', 'description', 'medicines', 'lowStockCount', 'expiringCount'));
+        return view('pages.clinic.medicines.index', compact('title', 'description', 'medicines', 'lowStockCount', 'expiringCount', 'categories'));
     }
 
     public function create()

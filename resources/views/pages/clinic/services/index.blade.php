@@ -12,6 +12,13 @@
                     </a>
                 </div>
             </div>
+            <form action="{{ route('clinic.services.index', app()->getLocale()) }}" method="GET"
+                class="d-flex align-items-center bg-white rounded-pill px-3 py-2 shadow-sm mt-sm-0 mt-15"
+                style="border: 1px solid #e5e7eb;">
+                <i class="uil uil-search text-muted me-2"></i>
+                <input type="search" name="search" placeholder="Cari layanan..." value="{{ request('search') }}"
+                    class="border-0" style="outline: none; width: 180px;">
+            </form>
         </div>
 
         @if(session('success'))

@@ -23,11 +23,26 @@ class AppointmentController extends Controller
         return view('pages.clinic.appointments.index', compact('title', 'description', 'appointments'));
     }
 
-    public function today()
+    public function today(Request $request)
     {
-        $appointments = Appointment::with(['patient', 'doctor'])
-            ->today()
-            ->orderBy('queue_number', 'ASC')
+        $query = Appointment::with(['patient', 'doctor'])
+            ->today();
+
+        // Search functionality
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->whereHas('patient', function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                    ->orWhere('no_rm', 'like', "%{$search}%");
+            });
+        }
+
+        $appointments = $query->orderByRaw("CASE 
+                WHEN status = 'waiting' THEN 1 
+                WHEN status = 'in_progress' THEN 2 
+                ELSE 3 
+            END")
+            ->orderBy('id', 'DESC')
             ->get();
         $title = "Antrian Hari Ini";
         $description = "Daftar antrian pasien hari ini";

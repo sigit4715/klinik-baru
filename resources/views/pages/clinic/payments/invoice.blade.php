@@ -121,7 +121,7 @@
                                                     {{ number_format($item['price'] ?? 0, 0, ',', '.') }}</td>
                                                 <td class="invoice-quantity text-center">{{ $item['qty'] ?? 1 }}</td>
                                                 <td class="text-end order fw-600">Rp
-                                                    {{ number_format($item['subtotal'] ?? 0, 0, ',', '.') }}</td>
+                                                    {{ number_format(($item['subtotal'] ?? 0) > 0 ? $item['subtotal'] : (($item['qty'] ?? 1) * ($item['price'] ?? 0)), 0, ',', '.') }}</td>
                                             </tr>
                                         @empty
                                             <tr>
