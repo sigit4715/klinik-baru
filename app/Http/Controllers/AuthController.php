@@ -138,6 +138,7 @@ class AuthController extends Controller
                     'is_active' => false, // Inactive until admin approves
                     'role' => 'staff',
                     'google_id' => $googleUser->getId(),
+                    'avatar' => $googleUser->getAvatar(), // Google profile photo
                 ]);
 
                 return redirect()->route('login')->with('message', 'Pendaftaran berhasil menggunakan Google! Akun Anda (' . $googleUser->getEmail() . ') sedang menunggu verifikasi dari admin. Anda akan dapat login setelah admin mengaktifkan akun Anda.');

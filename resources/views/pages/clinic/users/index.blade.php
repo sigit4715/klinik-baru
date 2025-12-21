@@ -138,6 +138,15 @@
         margin-right: 12px;
     }
     
+    .user-avatar-img {
+        width: 45px;
+        height: 45px;
+        border-radius: 12px;
+        object-fit: cover;
+        margin-right: 12px;
+        border: 2px solid #e5e7eb;
+    }
+    
     .user-avatar.bg-1 { background: linear-gradient(135deg, #667eea, #764ba2); }
     .user-avatar.bg-2 { background: linear-gradient(135deg, #f093fb, #f5576c); }
     .user-avatar.bg-3 { background: linear-gradient(135deg, #4facfe, #00f2fe); }
@@ -339,9 +348,13 @@
                                 <td><strong>{{ $index + 1 }}</strong></td>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <div class="user-avatar bg-{{ ($index % 4) + 1 }}">
-                                            {{ strtoupper(substr($user->name, 0, 1)) }}
-                                        </div>
+                                        @if($user->avatar)
+                                            <img src="{{ $user->avatar }}" alt="{{ $user->name }}" class="user-avatar-img">
+                                        @else
+                                            <div class="user-avatar bg-{{ ($index % 4) + 1 }}">
+                                                {{ strtoupper(substr($user->name, 0, 1)) }}
+                                            </div>
+                                        @endif
                                         <div class="user-info">
                                             <div class="user-name">{{ $user->name }}</div>
                                             <div class="user-email">{{ $user->email }}</div>
