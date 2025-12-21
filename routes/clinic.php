@@ -72,13 +72,16 @@ Route::group(['middleware' => 'auth'], function () {
                 Route::get('/', [AppointmentController::class, 'index'])->name('index');
                 Route::get('today', [AppointmentController::class, 'today'])->name('today');
                 Route::get('create', [AppointmentController::class, 'create'])->name('create');
+                Route::get('display', [AppointmentController::class, 'display'])->name('display');
+                Route::get('waiting', [AppointmentController::class, 'getWaitingQueue'])->name('waiting');
                 Route::post('store', [AppointmentController::class, 'store'])->name('store');
+                Route::post('call-next', [AppointmentController::class, 'callNext'])->name('call-next');
                 Route::get('{id}', [AppointmentController::class, 'show'])->name('show');
                 Route::get('{id}/edit', [AppointmentController::class, 'edit'])->name('edit');
                 Route::put('{id}', [AppointmentController::class, 'update'])->name('update');
                 Route::delete('{id}', [AppointmentController::class, 'destroy'])->name('destroy');
                 Route::patch('{id}/status', [AppointmentController::class, 'updateStatus'])->name('update-status');
-                Route::post('call-next', [AppointmentController::class, 'callNext'])->name('call-next');
+                Route::post('{id}/call', [AppointmentController::class, 'callSpecific'])->name('call-specific');
             });
 
             // Medical Records

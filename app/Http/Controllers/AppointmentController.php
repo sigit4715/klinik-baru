@@ -149,4 +149,87 @@ class AppointmentController extends Controller
         }
         return response()->json(['success' => false, 'message' => 'Tidak ada antrian']);
     }
+
+    /**
+     * Panggil antrian spesifik berdasarkan ID
+     */
+    public function callSpecific($language, $id)
+    {
+        $appointment = Appointment::with(['patient', 'doctor'])->findOrFail($id);
+
+        if ($appointment->status !== 'waiting') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Antrian ini sudah dipanggil atau selesai'
+            ]);
+        }
+
+        $appointment->status = 'in_progress';
+        $appointment->save();
+
+        return response()->json([
+            'success' => true,
+            'appointment' => $appointment,
+            'message' => 'Antrian berhasil dipanggil'
+        ]);
+    }
+
+    /**
+     * Get daftar antrian yang menunggu untuk API
+     */
+    public function getWaitingQueue($language)
+    {
+        $waiting = Appointment::with(['patient', 'doctor'])
+            ->today()
+            ->waiting()
+            ->orderBy('queue_number')
+            ->get();
+
+        $inProgress = Appointment::with(['patient', 'doctor'])
+            ->today()
+            ->where('status', 'in_progress')
+            ->orderBy('queue_number')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'waiting' => $waiting,
+            'in_progress' => $inProgress,
+            'waiting_count' => $waiting->count(),
+            'in_progress_count' => $inProgress->count()
+        ]);
+    }
+
+    /**
+     * Halaman display antrian untuk layar TV ruang tunggu
+     */
+    public function display($language)
+    {
+        $waiting = Appointment::with(['patient', 'doctor'])
+            ->today()
+            ->waiting()
+            ->orderBy('queue_number')
+            ->get();
+
+        $current = Appointment::with(['patient', 'doctor'])
+            ->today()
+            ->where('status', 'in_progress')
+            ->orderBy('updated_at', 'desc')
+            ->first();
+
+        $completed = Appointment::today()
+            ->where('status', 'completed')
+            ->count();
+
+        $title = "Display Antrian";
+        $description = "Tampilan layar antrian";
+
+        return view('pages.clinic.appointments.display', compact(
+            'title',
+            'description',
+            'waiting',
+            'current',
+            'completed'
+        ));
+    }
 }
