@@ -486,12 +486,13 @@
             const originalAddress = addressTextarea.value;
 
             // Initialize Select2
-            function initSelect2(selector, placeholder) {
+            function initSelect2(selector, placeholder, tags = false) {
                 $(selector).select2({
                     theme: 'bootstrap-5',
                     placeholder: placeholder,
                     allowClear: true,
-                    width: '100%'
+                    width: '100%',
+                    tags: tags // Allow manual input if true
                 });
             }
 
@@ -510,7 +511,7 @@
                     initSelect2('#provinsi', 'Pilih Provinsi...');
                     initSelect2('#kabupaten', 'Pilih Kabupaten...');
                     initSelect2('#kecamatan', 'Pilih Kecamatan...');
-                    initSelect2('#kelurahan', 'Pilih Kelurahan...');
+                    initSelect2('#kelurahan', 'Pilih Kelurahan...', true); // Enable tags for Kelurahan
                 })
                 .catch(err => console.error('Error loading provinces:', err));
 

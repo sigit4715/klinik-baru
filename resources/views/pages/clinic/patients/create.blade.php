@@ -4,7 +4,8 @@
 
 @push('css')
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css"
+        rel="stylesheet" />
     <style>
         .patient-form-header {
             background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
@@ -165,7 +166,7 @@
         .address-detail-input {
             margin-top: 12px;
         }
-        
+
         /* Select2 Custom Styling */
         .select2-container--bootstrap-5 .select2-selection {
             border-radius: 10px !important;
@@ -173,26 +174,26 @@
             padding: 6px 10px !important;
             min-height: 44px !important;
         }
-        
+
         .select2-container--bootstrap-5 .select2-selection--single .select2-selection__rendered {
             padding-left: 0 !important;
             line-height: 28px !important;
         }
-        
+
         .select2-container--bootstrap-5 .select2-selection--single .select2-selection__arrow {
             height: 42px !important;
         }
-        
+
         .select2-container--bootstrap-5 .select2-dropdown {
             border-radius: 10px !important;
             border: 1px solid #e5e7eb !important;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.1) !important;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1) !important;
         }
-        
+
         .select2-container--bootstrap-5 .select2-results__option--highlighted {
             background-color: #3b82f6 !important;
         }
-        
+
         .select2-container--bootstrap-5 .select2-search--dropdown .select2-search__field {
             border-radius: 8px !important;
             padding: 8px 12px !important;
@@ -437,21 +438,22 @@
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const apiBaseUrl = 'https://www.emsifa.com/api-wilayah-indonesia/api';
 
             const provinsiSelect = document.getElementById('provinsi');
             const kabupatenSelect = document.getElementById('kabupaten');
             const kecamatanSelect = document.getElementById('kecamatan');
             const kelurahanSelect = document.getElementById('kelurahan');
-            
+
             // Initialize Select2
-            function initSelect2(selector, placeholder) {
+            function initSelect2(selector, placeholder, tags = false) {
                 $(selector).select2({
                     theme: 'bootstrap-5',
                     placeholder: placeholder,
                     allowClear: true,
-                    width: '100%'
+                    width: '100%',
+                    tags: tags // Allow manual input if true
                 });
             }
 
@@ -470,12 +472,12 @@
                     initSelect2('#provinsi', 'Pilih Provinsi...');
                     initSelect2('#kabupaten', 'Pilih Kabupaten...');
                     initSelect2('#kecamatan', 'Pilih Kecamatan...');
-                    initSelect2('#kelurahan', 'Pilih Kelurahan...');
+                    initSelect2('#kelurahan', 'Pilih Kelurahan...', true); // Enable tags for Kelurahan
                 })
                 .catch(err => console.error('Error loading provinces:', err));
 
             // On Provinsi change
-            $(provinsiSelect).on('change', function() {
+            $(provinsiSelect).on('change', function () {
                 const selectedOption = this.options[this.selectedIndex];
                 const provinceId = selectedOption ? selectedOption.dataset.id : null;
 
@@ -509,7 +511,7 @@
             });
 
             // On Kabupaten change
-            $(kabupatenSelect).on('change', function() {
+            $(kabupatenSelect).on('change', function () {
                 const selectedOption = this.options[this.selectedIndex];
                 const regencyId = selectedOption ? selectedOption.dataset.id : null;
 
@@ -540,7 +542,7 @@
             });
 
             // On Kecamatan change
-            $(kecamatanSelect).on('change', function() {
+            $(kecamatanSelect).on('change', function () {
                 const selectedOption = this.options[this.selectedIndex];
                 const districtId = selectedOption ? selectedOption.dataset.id : null;
 
