@@ -117,7 +117,7 @@
                                                 @endif
                                             </td>
                                             <td>
-                                                <div class="d-flex gap-1">
+                                                <div class="d-flex gap-1 flex-wrap">
                                                     @if($apt->status == 'waiting')
                                                         <button type="button" class="btn btn-sm btn-call btn-call-specific"
                                                             data-id="{{ $apt->id }}" data-queue="{{ $apt->queue_number }}"
@@ -155,6 +155,18 @@
                                                             <i class="uil uil-eye"></i> Detail
                                                         </a>
                                                     @endif
+                                                    {{-- Delete Button --}}
+                                                    <form
+                                                        action="{{ route('clinic.appointments.destroy', [app()->getLocale(), $apt->id]) }}"
+                                                        method="POST" class="d-inline delete-form"
+                                                        onsubmit="return confirm('Apakah Anda yakin ingin menghapus antrian {{ $apt->queue_number }} ({{ $apt->patient->name }})?')">
+                                                        @csrf
+                                                        @method('DELETE')
+                                                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                            title="Hapus">
+                                                            <i class="uil uil-trash-alt"></i>
+                                                        </button>
+                                                    </form>
                                                 </div>
                                             </td>
                                         </tr>
