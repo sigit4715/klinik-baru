@@ -235,24 +235,165 @@
 
                 <!-- Medical Record -->
                 @if($appointment->medicalRecord)
+                    @php $mr = $appointment->medicalRecord; @endphp
                     <div class="card mb-3">
-                        <div class="card-header bg-success text-white">
-                            <i class="uil uil-file-medical-alt me-2"></i>Rekam Medis Kunjungan Ini
+                        <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                            <span><i class="uil uil-file-medical-alt me-2"></i>Rekam Medis Kunjungan Ini</span>
+                            <a href="{{ route('clinic.medical-records.show', [app()->getLocale(), $mr->id]) }}"
+                                class="btn btn-sm btn-light">Detail Lengkap</a>
                         </div>
                         <div class="card-body">
-                            <div class="row">
+                            <!-- Anamnesa & Diagnosis -->
+                            <div class="row mb-3">
                                 <div class="col-md-6">
-                                    <p class="mb-2">
-                                        <strong>Anamnesa:</strong><br>{{ $appointment->medicalRecord->anamnesa ?? '-' }}</p>
+                                    <div class="p-3 bg-light rounded">
+                                        <small class="text-muted text-uppercase">Anamnesa</small>
+                                        <p class="mb-0 mt-1">{{ $mr->anamnesa ?? '-' }}</p>
+                                    </div>
                                 </div>
                                 <div class="col-md-6">
-                                    <p class="mb-2"><strong>Diagnosis:</strong><br>{{ $appointment->medicalRecord->diagnosis }}
-                                    </p>
+                                    <div class="p-3 bg-primary bg-opacity-10 rounded">
+                                        <small class="text-muted text-uppercase">Diagnosis</small>
+                                        <p class="mb-0 mt-1 fw-bold text-primary">{{ $mr->diagnosis }}</p>
+                                    </div>
                                 </div>
                             </div>
-                            @if($appointment->medicalRecord->treatment)
-                                <hr>
-                                <p class="mb-0"><strong>Tindakan:</strong><br>{{ $appointment->medicalRecord->treatment }}</p>
+
+                            <!-- Treatment -->
+                            @if($mr->treatment)
+                                <div class="p-3 bg-success bg-opacity-10 rounded mb-3">
+                                    <small class="text-muted text-uppercase">Tindakan / Treatment</small>
+                                    <p class="mb-0 mt-1">{{ $mr->treatment }}</p>
+                                </div>
+                            @endif
+
+                            <!-- Vital Signs -->
+                            @if($mr->blood_pressure || $mr->body_temperature || $mr->pulse_rate || $mr->respiratory_rate || $mr->height || $mr->weight)
+                                <div class="mb-3">
+                                    <small class="text-muted text-uppercase d-block mb-2">Tanda-Tanda Vital</small>
+                                    <div class="row g-2">
+                                        @if($mr->blood_pressure)
+                                            <div class="col-md-4 col-6">
+                                                <div class="p-2 border rounded text-center">
+                                                    <i class="uil uil-heartbeat text-danger"></i>
+                                                    <div class="fw-bold">{{ $mr->blood_pressure }} mmHg</div>
+                                                    <small class="text-muted">Tekanan Darah</small>
+                                                </div>
+                                            </div>
+                                        @endif
+                                        @if($mr->body_temperature)
+                                            <div class="col-md-4 col-6">
+                                                <div class="p-2 border rounded text-center">
+                                                    <i class="uil uil-temperature text-warning"></i>
+                                                    <div class="fw-bold">{{ $mr->body_temperature }} °C</div>
+                                                    <small class="text-muted">Suhu Badan</small>
+                                                </div>
+                                            </div>
+                                        @endif
+                                        @if($mr->pulse_rate)
+                                            <div class="col-md-4 col-6">
+                                                <div class="p-2 border rounded text-center">
+                                                    <i class="uil uil-heart-rate text-danger"></i>
+                                                    <div class="fw-bold">{{ $mr->pulse_rate }} bpm</div>
+                                                    <small class="text-muted">Denyut Nadi</small>
+                                                </div>
+                                            </div>
+                                        @endif
+                                        @if($mr->respiratory_rate)
+                                            <div class="col-md-4 col-6">
+                                                <div class="p-2 border rounded text-center">
+                                                    <i class="uil uil-wind text-info"></i>
+                                                    <div class="fw-bold">{{ $mr->respiratory_rate }} /mnt</div>
+                                                    <small class="text-muted">Pernapasan</small>
+                                                </div>
+                                            </div>
+                                        @endif
+                                        @if($mr->height)
+                                            <div class="col-md-4 col-6">
+                                                <div class="p-2 border rounded text-center">
+                                                    <i class="uil uil-ruler text-secondary"></i>
+                                                    <div class="fw-bold">{{ $mr->height }} cm</div>
+                                                    <small class="text-muted">Tinggi Badan</small>
+                                                </div>
+                                            </div>
+                                        @endif
+                                        @if($mr->weight)
+                                            <div class="col-md-4 col-6">
+                                                <div class="p-2 border rounded text-center">
+                                                    <i class="uil uil-weight text-secondary"></i>
+                                                    <div class="fw-bold">{{ $mr->weight }} kg</div>
+                                                    <small class="text-muted">Berat Badan</small>
+                                                </div>
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            @endif
+
+                            <!-- Prescriptions -->
+                            @if($mr->prescriptions && count($mr->prescriptions) > 0)
+                                <div class="mb-3">
+                                    <small class="text-muted text-uppercase d-block mb-2"><i class="uil uil-capsule me-1"></i>Resep
+                                        Obat</small>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-bordered mb-0">
+                                            <thead class="bg-light">
+                                                <tr>
+                                                    <th>Obat</th>
+                                                    <th>Jumlah</th>
+                                                    <th>Dosis</th>
+                                                    <th>Keterangan</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @php $prescriptionDetails = $mr->getPrescriptionDetails(); @endphp
+                                                @foreach($prescriptionDetails as $prescription)
+                                                    <tr>
+                                                        <td>{{ $prescription['name'] ?? 'Unknown' }}</td>
+                                                        <td>{{ $prescription['qty'] }}</td>
+                                                        <td>{{ $prescription['dosage'] ?? '-' }}</td>
+                                                        <td>{{ $prescription['notes'] ?? '-' }}</td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            @endif
+
+                            <!-- Services Used -->
+                            @if($mr->services_used && count($mr->services_used) > 0)
+                                <div class="mb-3">
+                                    <small class="text-muted text-uppercase d-block mb-2"><i
+                                            class="uil uil-medical-square me-1"></i>Layanan/Tindakan</small>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm table-bordered mb-0">
+                                            <thead class="bg-light">
+                                                <tr>
+                                                    <th>Layanan</th>
+                                                    <th>Jumlah</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @php $serviceDetails = $mr->getServiceDetails(); @endphp
+                                                @foreach($serviceDetails as $service)
+                                                    <tr>
+                                                        <td>{{ $service['name'] ?? 'Unknown' }}</td>
+                                                        <td>{{ $service['qty'] }}</td>
+                                                    </tr>
+                                                @endforeach
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            @endif
+
+                            <!-- Notes -->
+                            @if($mr->notes)
+                                <div class="p-3 bg-warning bg-opacity-10 rounded">
+                                    <small class="text-muted text-uppercase"><i class="uil uil-notes me-1"></i>Catatan</small>
+                                    <p class="mb-0 mt-1">{{ $mr->notes }}</p>
+                                </div>
                             @endif
                         </div>
                     </div>
