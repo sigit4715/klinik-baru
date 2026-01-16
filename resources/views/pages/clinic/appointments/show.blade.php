@@ -252,18 +252,18 @@
                                     </div>
                                 </div>
                                 <div class="col-md-6">
-                                    <div class="p-3 bg-primary bg-opacity-10 rounded">
+                                    <div class="p-3 rounded" style="background-color: #e0f2fe;">
                                         <small class="text-muted text-uppercase">Diagnosis</small>
-                                        <p class="mb-0 mt-1 fw-bold text-primary">{{ $mr->diagnosis }}</p>
+                                        <p class="mb-0 mt-1 fw-bold" style="color: #0369a1;">{{ $mr->diagnosis }}</p>
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Treatment -->
                             @if($mr->treatment)
-                                <div class="p-3 bg-success bg-opacity-10 rounded mb-3">
+                                <div class="p-3 rounded mb-3" style="background-color: #dcfce7;">
                                     <small class="text-muted text-uppercase">Tindakan / Treatment</small>
-                                    <p class="mb-0 mt-1">{{ $mr->treatment }}</p>
+                                    <p class="mb-0 mt-1" style="color: #166534;">{{ $mr->treatment }}</p>
                                 </div>
                             @endif
 
@@ -349,7 +349,7 @@
                                                 @php $prescriptionDetails = $mr->getPrescriptionDetails(); @endphp
                                                 @foreach($prescriptionDetails as $prescription)
                                                     <tr>
-                                                        <td>{{ $prescription['name'] ?? 'Unknown' }}</td>
+                                                        <td>{{ $prescription['medicine']->name ?? 'Unknown' }}</td>
                                                         <td>{{ $prescription['qty'] }}</td>
                                                         <td>{{ $prescription['dosage'] ?? '-' }}</td>
                                                         <td>{{ $prescription['notes'] ?? '-' }}</td>
@@ -378,7 +378,7 @@
                                                 @php $serviceDetails = $mr->getServiceDetails(); @endphp
                                                 @foreach($serviceDetails as $service)
                                                     <tr>
-                                                        <td>{{ $service['name'] ?? 'Unknown' }}</td>
+                                                        <td>{{ $service['service']->name ?? 'Unknown' }}</td>
                                                         <td>{{ $service['qty'] }}</td>
                                                     </tr>
                                                 @endforeach
@@ -390,9 +390,9 @@
 
                             <!-- Notes -->
                             @if($mr->notes)
-                                <div class="p-3 bg-warning bg-opacity-10 rounded">
+                                <div class="p-3 rounded" style="background-color: #fef9c3;">
                                     <small class="text-muted text-uppercase"><i class="uil uil-notes me-1"></i>Catatan</small>
-                                    <p class="mb-0 mt-1">{{ $mr->notes }}</p>
+                                    <p class="mb-0 mt-1" style="color: #854d0e;">{{ $mr->notes }}</p>
                                 </div>
                             @endif
                         </div>
