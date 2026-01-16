@@ -126,8 +126,12 @@
 
                 {{-- Recent Appointments --}}
                 <div class="card mb-25">
-                    <div class="card-header">
+                    <div class="card-header d-flex justify-content-between align-items-center">
                         <h6 class="mb-0"><i class="uil uil-calendar-alt me-2"></i>Riwayat Kunjungan</h6>
+                        @if($patient->appointments->count() > 5)
+                            <a href="{{ route('clinic.medical-records.patient-history', [app()->getLocale(), $patient->id]) }}" 
+                               class="btn btn-sm btn-outline-primary">Lihat Semua</a>
+                        @endif
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
@@ -137,30 +141,66 @@
                                         <th>Tanggal</th>
                                         <th>No. Antrian</th>
                                         <th>Dokter</th>
-                                        <th>Keluhan</th>
+                                        <th>Keluhan/Diagnosis</th>
                                         <th>Status</th>
+                                        <th>Aksi</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @forelse($patient->appointments->take(5) as $appointment)
-                                        <tr>
-                                            <td>{{ $appointment->appointment_date->format('d M Y') }}</td>
+                                    @php
+                                        $days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+                                        $months = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+                                    @endphp
+                                    @forelse($patient->appointments->sortByDesc('appointment_date')->take(10) as $appointment)
+                                        @php 
+                                            $medicalRecord = $patient->medicalRecords->where('appointment_id', $appointment->id)->first();
+                                        @endphp
+                                        <tr style="cursor: pointer;" 
+                                            @if($medicalRecord) 
+                                                onclick="window.location='{{ route('clinic.medical-records.show', [app()->getLocale(), $medicalRecord->id]) }}'" 
+                                                title="Klik untuk lihat detail rekam medis"
+                                            @endif>
+                                            <td>
+                                                @php $ad = $appointment->appointment_date; @endphp
+                                                {{ $days[$ad->dayOfWeek] }}, {{ $ad->day }} {{ $months[$ad->month] }} {{ $ad->year }}
+                                            </td>
                                             <td><code>{{ $appointment->queue_number }}</code></td>
                                             <td>{{ $appointment->doctor->name }}</td>
-                                            <td>{{ Str::limit($appointment->complaint, 30) }}</td>
+                                            <td>
+                                                @if($medicalRecord)
+                                                    <strong>{{ Str::limit($medicalRecord->diagnosis, 25) }}</strong>
+                                                    @if($medicalRecord->treatment)
+                                                        <br><small class="text-muted">{{ Str::limit($medicalRecord->treatment, 30) }}</small>
+                                                    @endif
+                                                @else
+                                                    <em class="text-muted">{{ Str::limit($appointment->complaint, 40) }}</em>
+                                                @endif
+                                            </td>
                                             <td>
                                                 @if($appointment->status == 'completed')
                                                     <span class="badge bg-success">Selesai</span>
                                                 @elseif($appointment->status == 'waiting')
                                                     <span class="badge bg-warning">Menunggu</span>
+                                                @elseif($appointment->status == 'in_progress')
+                                                    <span class="badge bg-info">Diperiksa</span>
                                                 @else
                                                     <span class="badge bg-secondary">{{ $appointment->status }}</span>
+                                                @endif
+                                            </td>
+                                            <td>
+                                                @if($medicalRecord)
+                                                    <a href="{{ route('clinic.medical-records.show', [app()->getLocale(), $medicalRecord->id]) }}" 
+                                                       class="btn btn-sm btn-primary" onclick="event.stopPropagation();">
+                                                        <i class="uil uil-eye"></i> Detail
+                                                    </a>
+                                                @else
+                                                    <span class="text-muted">-</span>
                                                 @endif
                                             </td>
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="5" class="text-center py-4 text-muted">Belum ada riwayat kunjungan</td>
+                                            <td colspan="6" class="text-center py-4 text-muted">Belum ada riwayat kunjungan</td>
                                         </tr>
                                     @endforelse
                                 </tbody>

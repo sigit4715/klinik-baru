@@ -12,7 +12,31 @@
                     <div class="col-md-6">
                         <h5>{{ $patient->name }}</h5>
                         <p><code>{{ $patient->no_rm }}</code> | {{ $patient->gender == 'L' ? 'Laki-laki' : 'Perempuan' }},
-                            {{ $patient->birth_date->age }} tahun</p>
+                            @php
+                                if ($patient->birth_date) {
+                                    $birthDate = \Carbon\Carbon::parse($patient->birth_date);
+                                    $now = \Carbon\Carbon::now();
+                                    $diff = $birthDate->diff($now);
+
+                                    $ageStr = '';
+                                    if ($diff->y > 0) {
+                                        $ageStr .= $diff->y . ' tahun ';
+                                    }
+                                    if ($diff->m > 0) {
+                                        $ageStr .= $diff->m . ' bulan ';
+                                    }
+                                    if ($diff->d > 0) {
+                                        $ageStr .= $diff->d . ' hari';
+                                    }
+                                    if (empty(trim($ageStr))) {
+                                        $ageStr = '0 hari';
+                                    }
+                                    echo trim($ageStr);
+                                } else {
+                                    echo '-';
+                                }
+                            @endphp
+                        </p>
                     </div>
                     <div class="col-md-6 text-end">
                         <a href="{{ route('clinic.patients.show', [app()->getLocale(), $patient->id]) }}"
@@ -26,7 +50,16 @@
                 @forelse($records as $record)
                     <div class="border-start border-4 border-primary ps-3 mb-4">
                         <div class="d-flex justify-content-between">
-                            <h6 class="mb-1">{{ $record->created_at->format('d M Y') }}</h6>
+                            <h6 class="mb-1">
+                                @php
+                                    $days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+                                    $months = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+                                    $date = $record->created_at;
+                                    $dayName = $days[$date->dayOfWeek];
+                                    $monthName = $months[$date->month];
+                                @endphp
+                                {{ $dayName }}, {{ $date->day }} {{ $monthName }} {{ $date->year }}
+                            </h6>
                             <a href="{{ route('clinic.medical-records.show', [app()->getLocale(), $record->id]) }}"
                                 class="btn btn-sm btn-outline-info">Detail</a>
                         </div>

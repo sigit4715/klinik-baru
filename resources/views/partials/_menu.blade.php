@@ -119,6 +119,29 @@
                         href="{{ route('clinic.reports.yearly', app()->getLocale()) }}">Pendapatan Tahunan</a></li>
             </ul>
         </li>
+        <li class="has-child {{ Request::is(app()->getLocale() . '/clinic/patient-reports*') ? 'open' : '' }}">
+            <a href="#" class="{{ Request::is(app()->getLocale() . '/clinic/patient-reports*') ? 'active' : '' }}">
+                <span class="nav-icon uil uil-chart-pie-alt"></span>
+                <span class="menu-text">Laporan Pasien</span>
+                <span class="toggle-icon"></span>
+            </a>
+            <ul>
+                <li><a class="{{ Request::is(app()->getLocale() . '/clinic/patient-reports/kb') ? 'active' : '' }}"
+                        href="{{ route('clinic.patient-reports.kb', app()->getLocale()) }}">Laporan KB</a></li>
+                <li><a class="{{ Request::is(app()->getLocale() . '/clinic/patient-reports/imunisasi') ? 'active' : '' }}"
+                        href="{{ route('clinic.patient-reports.imunisasi', app()->getLocale()) }}">Laporan Imunisasi</a>
+                </li>
+                <li><a class="{{ Request::is(app()->getLocale() . '/clinic/patient-reports/ibu-hamil') ? 'active' : '' }}"
+                        href="{{ route('clinic.patient-reports.ibu-hamil', app()->getLocale()) }}">Laporan Ibu Hamil</a>
+                </li>
+                <li><a class="{{ Request::is(app()->getLocale() . '/clinic/patient-reports/melahirkan') ? 'active' : '' }}"
+                        href="{{ route('clinic.patient-reports.melahirkan', app()->getLocale()) }}">Laporan
+                        Melahirkan</a></li>
+                <li><a class="{{ Request::is(app()->getLocale() . '/clinic/patient-reports/umum') ? 'active' : '' }}"
+                        href="{{ route('clinic.patient-reports.umum', app()->getLocale()) }}">Laporan Pasien Umum</a>
+                </li>
+            </ul>
+        </li>
 
         <li class="menu-title mt-30">
             <span>Master Data</span>
@@ -161,6 +184,13 @@
                 class="{{ Request::is(app()->getLocale() . '/clinic/users*') ? 'active' : '' }}">
                 <span class="nav-icon uil uil-users-alt"></span>
                 <span class="menu-text">Manajemen User</span>
+            </a>
+        </li>
+        <li>
+            <a href="{{ route('clinic.backup.index', app()->getLocale()) }}"
+                class="{{ Request::is(app()->getLocale() . '/clinic/backup*') ? 'active' : '' }}">
+                <span class="nav-icon uil uil-database"></span>
+                <span class="menu-text">Backup Database</span>
             </a>
         </li>
         <li class="has-child">

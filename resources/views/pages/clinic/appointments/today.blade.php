@@ -147,14 +147,21 @@
                                                         </a>
                                                     @elseif($apt->status == 'completed' && $apt->payment)
                                                         <a href="{{ route('clinic.payments.receipt', [app()->getLocale(), $apt->payment->id]) }}"
-                                                            class="btn btn-sm btn-success" target="_blank" title="Cetak Struk">
-                                                            <i class="uil uil-receipt"></i> Struk
-                                                        </a>
-                                                        <a href="{{ route('clinic.appointments.show', [app()->getLocale(), $apt->id]) }}"
-                                                            class="btn btn-sm btn-outline-info" title="Detail">
-                                                            <i class="uil uil-eye"></i> Detail
+                                                            class="btn btn-sm btn-warning" target="_blank" title="Cetak Struk Pembayaran">
+                                                            <i class="uil uil-bill"></i> Invoice
                                                         </a>
                                                     @endif
+                                                    {{-- Struk Antrian Button - Available for all statuses --}}
+                                                    <a href="{{ route('clinic.appointments.print-struk', [app()->getLocale(), $apt->id]) }}"
+                                                        class="btn btn-sm btn-success" target="_blank"
+                                                        title="Cetak Struk Antrian">
+                                                        <i class="uil uil-receipt"></i> Struk
+                                                    </a>
+                                                    {{-- Detail Button --}}
+                                                    <a href="{{ route('clinic.appointments.show', [app()->getLocale(), $apt->id]) }}"
+                                                        class="btn btn-sm btn-outline-info" title="Detail">
+                                                        <i class="uil uil-eye"></i> Detail
+                                                    </a>
                                                     {{-- Delete Button --}}
                                                     <form
                                                         action="{{ route('clinic.appointments.destroy', [app()->getLocale(), $apt->id]) }}"

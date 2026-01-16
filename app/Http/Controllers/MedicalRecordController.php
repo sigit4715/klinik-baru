@@ -33,11 +33,28 @@ class MedicalRecordController extends Controller
             });
         }
 
-        $patients = $query->orderBy('updated_at', 'DESC')->paginate(10)->withQueryString();
+        // Sort functionality
+        $sort = $request->get('sort', 'latest');
+        switch ($sort) {
+            case 'most_visits':
+                $query->orderBy('medical_records_count', 'DESC');
+                break;
+            case 'oldest':
+                $query->orderBy('updated_at', 'ASC');
+                break;
+            case 'name':
+                $query->orderBy('name', 'ASC');
+                break;
+            default: // latest
+                $query->orderBy('updated_at', 'DESC');
+                break;
+        }
+
+        $patients = $query->paginate(10)->withQueryString();
         $title = "Rekam Medis";
         $description = "Kelola rekam medis pasien";
 
-        return view('pages.clinic.medical-records.index', compact('title', 'description', 'patients'));
+        return view('pages.clinic.medical-records.index', compact('title', 'description', 'patients', 'sort'));
     }
 
     public function create($language, $appointmentId = null)
@@ -148,12 +165,21 @@ class MedicalRecordController extends Controller
         $prescriptionDetails = $record->getPrescriptionDetails();
         $serviceDetails = $record->getServiceDetails();
 
+        // Get patient history (previous medical records)
+        $patientHistory = MedicalRecord::with(['doctor'])
+            ->where('patient_id', $record->patient_id)
+            ->where('id', '!=', $id) // Exclude current record
+            ->orderBy('created_at', 'DESC')
+            ->limit(10)
+            ->get();
+
         return view('pages.clinic.medical-records.show', compact(
             'title',
             'description',
             'record',
             'prescriptionDetails',
-            'serviceDetails'
+            'serviceDetails',
+            'patientHistory'
         ));
     }
 

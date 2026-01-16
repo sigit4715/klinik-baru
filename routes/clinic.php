@@ -76,6 +76,7 @@ Route::group(['middleware' => 'auth'], function () {
                 Route::get('waiting', [AppointmentController::class, 'getWaitingQueue'])->name('waiting');
                 Route::post('store', [AppointmentController::class, 'store'])->name('store');
                 Route::post('call-next', [AppointmentController::class, 'callNext'])->name('call-next');
+                Route::get('{id}/print-struk', [AppointmentController::class, 'printStruk'])->name('print-struk');
                 Route::get('{id}', [AppointmentController::class, 'show'])->name('show');
                 Route::get('{id}/edit', [AppointmentController::class, 'edit'])->name('edit');
                 Route::put('{id}', [AppointmentController::class, 'update'])->name('update');
@@ -114,6 +115,15 @@ Route::group(['middleware' => 'auth'], function () {
                 Route::get('yearly', [\App\Http\Controllers\ReportController::class, 'yearly'])->name('yearly');
             });
 
+            // Patient Reports (KB, Imunisasi, Ibu Hamil, Melahirkan, Umum)
+            Route::group(['prefix' => 'patient-reports', 'as' => 'patient-reports.'], function () {
+                Route::get('kb', [\App\Http\Controllers\PatientReportController::class, 'kb'])->name('kb');
+                Route::get('imunisasi', [\App\Http\Controllers\PatientReportController::class, 'imunisasi'])->name('imunisasi');
+                Route::get('ibu-hamil', [\App\Http\Controllers\PatientReportController::class, 'ibuHamil'])->name('ibu-hamil');
+                Route::get('melahirkan', [\App\Http\Controllers\PatientReportController::class, 'melahirkan'])->name('melahirkan');
+                Route::get('umum', [\App\Http\Controllers\PatientReportController::class, 'umum'])->name('umum');
+            });
+
             // Settings
             Route::group(['prefix' => 'settings', 'as' => 'settings.'], function () {
                 Route::get('profile', [ClinicSettingController::class, 'index'])->name('profile');
@@ -128,6 +138,14 @@ Route::group(['middleware' => 'auth'], function () {
                 Route::get('{id}/edit', [\App\Http\Controllers\UserManagementController::class, 'edit'])->name('edit');
                 Route::put('{id}', [\App\Http\Controllers\UserManagementController::class, 'update'])->name('update');
                 Route::delete('{id}', [\App\Http\Controllers\UserManagementController::class, 'destroy'])->name('destroy');
+            });
+
+            // Backup Database
+            Route::group(['prefix' => 'backup', 'as' => 'backup.'], function () {
+                Route::get('/', [\App\Http\Controllers\BackupController::class, 'index'])->name('index');
+                Route::post('create', [\App\Http\Controllers\BackupController::class, 'create'])->name('create');
+                Route::get('download/{filename}', [\App\Http\Controllers\BackupController::class, 'download'])->name('download');
+                Route::delete('{filename}', [\App\Http\Controllers\BackupController::class, 'destroy'])->name('destroy');
             });
 
         });

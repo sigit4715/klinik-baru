@@ -13,7 +13,44 @@
                         <table class="table table-sm table-borderless">
                             <tr>
                                 <td>TTL</td>
-                                <td>{{ $record->patient->birth_place }}, {{ $record->patient->birth_date->format('d/m/Y') }}
+                                <td>
+                                    {{ $record->patient->birth_place }},
+                                    @php
+                                        $days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+                                        $months = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+                                        $birthDate = $record->patient->birth_date;
+                                        $dayName = $days[$birthDate->dayOfWeek];
+                                        $monthName = $months[$birthDate->month];
+                                    @endphp
+                                    {{ $dayName }}, {{ $birthDate->day }} {{ $monthName }} {{ $birthDate->year }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Umur</td>
+                                <td>
+                                    @php
+                                        if ($record->patient->birth_date) {
+                                            $now = \Carbon\Carbon::now();
+                                            $diff = $birthDate->diff($now);
+                                            
+                                            $ageStr = '';
+                                            if ($diff->y > 0) {
+                                                $ageStr .= $diff->y . ' tahun ';
+                                            }
+                                            if ($diff->m > 0) {
+                                                $ageStr .= $diff->m . ' bulan ';
+                                            }
+                                            if ($diff->d > 0) {
+                                                $ageStr .= $diff->d . ' hari';
+                                            }
+                                            if (empty(trim($ageStr))) {
+                                                $ageStr = '0 hari';
+                                            }
+                                            echo trim($ageStr);
+                                        } else {
+                                            echo '-';
+                                        }
+                                    @endphp
                                 </td>
                             </tr>
                             <tr>
@@ -142,6 +179,47 @@
                         @endif
                     </div>
                 </div>
+
+                <!-- Patient History -->
+                @if(isset($patientHistory) && $patientHistory->count() > 0)
+                    <div class="card mt-3">
+                        <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                            <span><i class="uil uil-history me-2"></i>Riwayat Berobat Sebelumnya</span>
+                            <a href="{{ route('clinic.medical-records.patient-history', [app()->getLocale(), $record->patient_id]) }}" 
+                               class="btn btn-sm btn-light">Lihat Semua</a>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="bg-light">
+                                        <tr>
+                                            <th>Tanggal</th>
+                                            <th>Dokter</th>
+                                            <th>Diagnosis</th>
+                                            <th>Tindakan</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach($patientHistory as $history)
+                                            <tr onclick="window.location='{{ route('clinic.medical-records.show', [app()->getLocale(), $history->id]) }}'" 
+                                                style="cursor: pointer;" 
+                                                title="Klik untuk lihat detail">
+                                                <td>
+                                                    @php $hd = $history->created_at; @endphp
+                                                    {{ $days[$hd->dayOfWeek] }}, {{ $hd->day }} {{ $months[$hd->month] }} {{ $hd->year }}
+                                                </td>
+                                                <td>{{ $history->doctor->name ?? '-' }}</td>
+                                                <td>{{ Str::limit($history->diagnosis, 40) }}</td>
+                                                <td>{{ Str::limit($history->treatment ?? '-', 30) }}</td>
+                                            </tr>
+                                        @endforeach
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                @endif
+
                 <div class="mt-3">
                     @if($record->appointment && !$record->appointment->payment)
                         <a href="{{ route('clinic.payments.create', [app()->getLocale(), $record->appointment_id]) }}"

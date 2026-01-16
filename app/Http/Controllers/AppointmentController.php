@@ -7,6 +7,7 @@ use Validator;
 use App\Models\Appointment;
 use App\Models\Patient;
 use App\Models\Doctor;
+use App\Models\ClinicSetting;
 
 class AppointmentController extends Controller
 {
@@ -245,6 +246,25 @@ class AppointmentController extends Controller
             'waiting',
             'current',
             'completed'
+        ));
+    }
+
+    /**
+     * Print struk antrian pendaftaran
+     */
+    public function printStruk($language, $id)
+    {
+        $appointment = Appointment::with(['patient', 'doctor'])->findOrFail($id);
+        $settings = ClinicSetting::getAllSettings();
+
+        $title = "Struk Antrian";
+        $description = "Cetak struk antrian pendaftaran";
+
+        return view('pages.clinic.appointments.print-struk', compact(
+            'title',
+            'description',
+            'appointment',
+            'settings'
         ));
     }
 }

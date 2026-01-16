@@ -29,11 +29,36 @@
                         @if($patient)
                             <h5>{{ $patient->name }}</h5>
                             <p class="text-muted mb-2"><code>{{ $patient->no_rm }}</code></p>
-                            <p><small>{{ $patient->gender == 'L' ? 'Laki-laki' : 'Perempuan' }}, {{ $patient->birth_date->age }}
-                                    tahun</small></p>
+                            <p><small>{{ $patient->gender == 'L' ? 'Laki-laki' : 'Perempuan' }},
+                                    @php
+                                        if ($patient->birth_date) {
+                                            $birthDate = \Carbon\Carbon::parse($patient->birth_date);
+                                            $now = \Carbon\Carbon::now();
+                                            $diff = $birthDate->diff($now);
+
+                                            $ageStr = '';
+                                            if ($diff->y > 0) {
+                                                $ageStr .= $diff->y . ' tahun ';
+                                            }
+                                            if ($diff->m > 0) {
+                                                $ageStr .= $diff->m . ' bulan ';
+                                            }
+                                            if ($diff->d > 0) {
+                                                $ageStr .= $diff->d . ' hari';
+                                            }
+                                            if (empty(trim($ageStr))) {
+                                                $ageStr = '0 hari';
+                                            }
+                                            echo trim($ageStr);
+                                        } else {
+                                            echo '-';
+                                        }
+                                    @endphp
+                                </small></p>
                             @if($patient->allergy)
                                 <div class="alert alert-danger py-2"><i class="uil uil-exclamation-triangle me-1"></i>Alergi:
-                                    {{ $patient->allergy }}</div>
+                                    {{ $patient->allergy }}
+                                </div>
                             @endif
                             <hr>
                             <p><strong>Keluhan:</strong><br>{{ $appointment->complaint }}</p>
@@ -63,7 +88,7 @@
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label">Tekanan Darah</label>
                                     <div class="input-group input-group-sm">
-                                        <input type="text" name="blood_pressure" class="form-control" 
+                                        <input type="text" name="blood_pressure" class="form-control"
                                             value="{{ old('blood_pressure') }}" placeholder="120/80">
                                         <span class="input-group-text">mmHg</span>
                                     </div>
@@ -71,7 +96,7 @@
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label">Suhu Badan</label>
                                     <div class="input-group input-group-sm">
-                                        <input type="number" step="0.1" name="body_temperature" class="form-control" 
+                                        <input type="number" step="0.1" name="body_temperature" class="form-control"
                                             value="{{ old('body_temperature') }}" placeholder="36.5">
                                         <span class="input-group-text">°C</span>
                                     </div>
@@ -79,7 +104,7 @@
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label">Denyut Nadi</label>
                                     <div class="input-group input-group-sm">
-                                        <input type="number" name="pulse_rate" class="form-control" 
+                                        <input type="number" name="pulse_rate" class="form-control"
                                             value="{{ old('pulse_rate') }}" placeholder="80">
                                         <span class="input-group-text">x/menit</span>
                                     </div>
@@ -89,7 +114,7 @@
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label">Pernapasan</label>
                                     <div class="input-group input-group-sm">
-                                        <input type="number" name="respiratory_rate" class="form-control" 
+                                        <input type="number" name="respiratory_rate" class="form-control"
                                             value="{{ old('respiratory_rate') }}" placeholder="20">
                                         <span class="input-group-text">x/menit</span>
                                     </div>
@@ -97,7 +122,7 @@
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label">Tinggi Badan</label>
                                     <div class="input-group input-group-sm">
-                                        <input type="number" step="0.1" name="height" class="form-control" 
+                                        <input type="number" step="0.1" name="height" class="form-control"
                                             value="{{ old('height') }}" placeholder="165">
                                         <span class="input-group-text">cm</span>
                                     </div>
@@ -105,7 +130,7 @@
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label">Berat Badan</label>
                                     <div class="input-group input-group-sm">
-                                        <input type="number" step="0.1" name="weight" class="form-control" 
+                                        <input type="number" step="0.1" name="weight" class="form-control"
                                             value="{{ old('weight') }}" placeholder="60">
                                         <span class="input-group-text">kg</span>
                                     </div>
@@ -150,7 +175,8 @@
                                             <option value="">Pilih Layanan...</option>
                                             @foreach($services as $svc)
                                                 <option value="{{ $svc->id }}">{{ $svc->name }} - Rp
-                                                    {{ number_format($svc->price, 0, ',', '.') }}</option>
+                                                    {{ number_format($svc->price, 0, ',', '.') }}
+                                                </option>
                                             @endforeach
                                         </select>
                                     </div>
@@ -205,11 +231,11 @@
 
         function addPrescription() {
             const html = `<div class="row mb-2 prescription-row align-items-center">
-                <div class="col-md-4"><select name="prescriptions[${prescriptionIndex}][medicine_id]" class="form-select form-select-sm select2-medicine">${medicineOptions}</select></div>
-                <div class="col-md-2"><input type="number" name="prescriptions[${prescriptionIndex}][qty]" class="form-control form-control-sm" placeholder="Qty" min="1"></div>
-                <div class="col-md-3"><input type="text" name="prescriptions[${prescriptionIndex}][dosage]" class="form-control form-control-sm" placeholder="Dosis"></div>
-                <div class="col-md-3"><input type="text" name="prescriptions[${prescriptionIndex}][notes]" class="form-control form-control-sm" placeholder="Ket"></div>
-            </div>`;
+                    <div class="col-md-4"><select name="prescriptions[${prescriptionIndex}][medicine_id]" class="form-select form-select-sm select2-medicine">${medicineOptions}</select></div>
+                    <div class="col-md-2"><input type="number" name="prescriptions[${prescriptionIndex}][qty]" class="form-control form-control-sm" placeholder="Qty" min="1"></div>
+                    <div class="col-md-3"><input type="text" name="prescriptions[${prescriptionIndex}][dosage]" class="form-control form-control-sm" placeholder="Dosis"></div>
+                    <div class="col-md-3"><input type="text" name="prescriptions[${prescriptionIndex}][notes]" class="form-control form-control-sm" placeholder="Ket"></div>
+                </div>`;
             document.getElementById('prescriptions').insertAdjacentHTML('beforeend', html);
             prescriptionIndex++;
             initSelect2();
@@ -217,9 +243,9 @@
 
         function addService() {
             const html = `<div class="row mb-2 service-row align-items-center">
-                <div class="col-md-8"><select name="services_used[${serviceIndex}][service_id]" class="form-select form-select-sm select2-service">${serviceOptions}</select></div>
-                <div class="col-md-4"><input type="number" name="services_used[${serviceIndex}][qty]" class="form-control form-control-sm" placeholder="Qty" min="1" value="1"></div>
-            </div>`;
+                    <div class="col-md-8"><select name="services_used[${serviceIndex}][service_id]" class="form-select form-select-sm select2-service">${serviceOptions}</select></div>
+                    <div class="col-md-4"><input type="number" name="services_used[${serviceIndex}][qty]" class="form-control form-control-sm" placeholder="Qty" min="1" value="1"></div>
+                </div>`;
             document.getElementById('services').insertAdjacentHTML('beforeend', html);
             serviceIndex++;
             initSelect2();

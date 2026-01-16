@@ -206,7 +206,24 @@
                     class="search-box">
                     <i class="uil uil-search"></i>
                     <input type="search" name="search" placeholder="Cari nama/no.RM..." value="{{ request('search') }}">
+                    @if(isset($sort))
+                        <input type="hidden" name="sort" value="{{ $sort }}">
+                    @endif
                 </form>
+            </div>
+        </div>
+
+        <!-- Sort Options -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <span class="text-muted">Total: {{ $patients->total() }} pasien</span>
+            <div class="d-flex align-items-center gap-2">
+                <label class="mb-0 text-muted">Urutkan:</label>
+                <select class="form-select form-select-sm" style="width: auto;" onchange="window.location.href='{{ route('clinic.medical-records.index', app()->getLocale()) }}?sort=' + this.value + '{{ request('search') ? '&search=' . request('search') : '' }}'">
+                    <option value="latest" {{ ($sort ?? 'latest') == 'latest' ? 'selected' : '' }}>Terbaru</option>
+                    <option value="most_visits" {{ ($sort ?? '') == 'most_visits' ? 'selected' : '' }}>Kunjungan Terbanyak</option>
+                    <option value="name" {{ ($sort ?? '') == 'name' ? 'selected' : '' }}>Nama A-Z</option>
+                    <option value="oldest" {{ ($sort ?? '') == 'oldest' ? 'selected' : '' }}>Terlama</option>
+                </select>
             </div>
         </div>
 
@@ -249,7 +266,15 @@
                                 @if($patient->medicalRecords->first())
                                     <div class="last-visit">
                                         <label>Kunjungan Terakhir</label>
-                                        <div class="date">{{ $patient->medicalRecords->first()->created_at->format('d M Y') }}</div>
+                                        @php
+                                            $days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+                                            $months = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+                                            $lastVisit = $patient->medicalRecords->first()->created_at;
+                                            $dayName = $days[$lastVisit->dayOfWeek];
+                                            $monthName = $months[$lastVisit->month];
+                                        @endphp
+                                        <div class="date">{{ $dayName }}, {{ $lastVisit->day }} {{ $monthName }}
+                                            {{ $lastVisit->year }}</div>
                                     </div>
                                 @endif
                                 <div class="action-btn view">
