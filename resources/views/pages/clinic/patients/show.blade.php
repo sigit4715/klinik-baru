@@ -55,8 +55,30 @@
                             </tr>
                             <tr>
                                 <td class="text-muted">TTL</td>
-                                <td class="text-end">{{ $patient->birth_place }},
-                                    {{ $patient->birth_date->format('d M Y') }}</td>
+                                <td class="text-end">
+                                    {{ $patient->birth_place }},
+                                    @php
+                                        $daysName = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+                                        $monthsName = ['', 'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+                                        $bd = $patient->birth_date;
+                                    @endphp
+                                    {{ $daysName[$bd->dayOfWeek] }}, {{ $bd->day }} {{ $monthsName[$bd->month] }} {{ $bd->year }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="text-muted">Umur</td>
+                                <td class="text-end fw-bold text-primary">
+                                    @php
+                                        $now = \Carbon\Carbon::now();
+                                        $diff = $bd->diff($now);
+                                        $ageStr = '';
+                                        if ($diff->y > 0) $ageStr .= $diff->y . ' tahun ';
+                                        if ($diff->m > 0) $ageStr .= $diff->m . ' bulan ';
+                                        if ($diff->d > 0) $ageStr .= $diff->d . ' hari';
+                                        if (empty(trim($ageStr))) $ageStr = '0 hari';
+                                    @endphp
+                                    {{ trim($ageStr) }}
+                                </td>
                             </tr>
                             <tr>
                                 <td class="text-muted">Gol. Darah</td>
