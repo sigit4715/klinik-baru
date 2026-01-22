@@ -31,3 +31,35 @@ Route::group(['middleware' => 'guest'], function () {
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 Route::get('/lang/{lang}', [LanguageController::class, 'switchLang'])->name('switch_lang');
 Route::get('/pagination-per-page/{per_page}', [PaginationController::class, 'set_pagination_per_page'])->name('pagination_per_page');
+
+// Clear cache route (untuk clear cache tanpa SSH)
+Route::get('/clear-cache/{key?}', function ($key = null) {
+    // Secret key untuk keamanan (ganti dengan key Anda sendiri)
+    $secretKey = 'klinik2026';
+
+    if ($key !== $secretKey) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Unauthorized. Gunakan: /clear-cache/' . $secretKey
+        ], 401);
+    }
+
+    try {
+        \Artisan::call('config:clear');
+        \Artisan::call('cache:clear');
+        \Artisan::call('view:clear');
+        \Artisan::call('route:clear');
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Semua cache berhasil dibersihkan!',
+            'cleared' => ['config', 'cache', 'view', 'route'],
+            'timestamp' => now()->format('Y-m-d H:i:s')
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Gagal clear cache: ' . $e->getMessage()
+        ], 500);
+    }
+})->name('clear.cache');
