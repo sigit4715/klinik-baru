@@ -230,19 +230,7 @@
                     {{ $dayName }}, {{ $date->day }} {{ $monthName }} {{ $date->year }}
                 </td>
             </tr>
-            <tr>
-                <td class="label">Tgl & Jam</td>
-                <td class="separator">:</td>
-                <td class="value">
-                    @php
-                        $created = $appointment->created_at;
-                        $dayNameCreated = $days[$created->dayOfWeek];
-                        $monthNameCreated = $months[$created->month];
-                    @endphp
-                    {{ $dayNameCreated }}, {{ $created->day }} {{ $monthNameCreated }} {{ $created->year }},
-                    {{ $created->format('H:i:s') }}
-                </td>
-            </tr>
+
             <tr>
                 <td class="label">Alamat</td>
                 <td class="separator">:</td>
@@ -296,18 +284,7 @@
             </tr>
         </table>
 
-        <!-- Nomor Antrian -->
-        <div class="queue-section">
-            <div class="queue-label">Nomor Antrian</div>
-            <div class="queue-number">
-                @php
-                    // Extract just the sequence number from queue_number like "20260116-009"
-                    $queueParts = explode('-', $appointment->queue_number);
-                    $queueSeq = end($queueParts);
-                    echo intval($queueSeq); // Remove leading zeros
-                @endphp
-            </div>
-        </div>
+
 
         <!-- Daftar Obat -->
         <div class="obat-section">
