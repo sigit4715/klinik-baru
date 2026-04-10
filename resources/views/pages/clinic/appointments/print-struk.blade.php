@@ -20,6 +20,7 @@
         body {
             font-family: 'Courier New', Courier, monospace;
             font-size: 12px;
+            font-weight: bold;
             width: 76mm;
             padding: 3mm;
             margin: 0 auto;
@@ -64,7 +65,7 @@
 
         .info-table .label {
             width: 40%;
-            font-weight: normal;
+            font-weight: bold;
         }
 
         .info-table .separator {
