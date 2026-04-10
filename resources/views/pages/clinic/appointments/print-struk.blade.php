@@ -15,16 +15,20 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            color: #000 !important; /* Paksa warna hitam pekat agar thermal printer tidak dithering/pecah */
         }
 
         body {
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 12px;
-            font-weight: bold;
+            font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif; /* Font sans-serif umumnya tercetak lebih tebal dan jelas di thermal */
+            font-size: 13px; /* Sedikit diperbesar */
+            font-weight: 900 !important; /* Ketebalan maksimal */
+            -webkit-text-stroke: 0.3px #000; /* Menambah ketebalan garis font buatan */
             width: 76mm;
             padding: 3mm;
             margin: 0 auto;
             background: #fff;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
         }
 
         .header {
