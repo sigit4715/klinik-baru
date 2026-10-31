@@ -43,6 +43,9 @@
                     <div class="card-body text-center">
                         <h6>Total Pendapatan</h6>
                         <h3 class="mb-0">Rp {{ number_format($totalIncome, 0, ',', '.') }}</h3>
+                        @if($totalRefunds > 0)
+                            <small>Bersih, sudah dikurangi refund Rp {{ number_format($totalRefunds, 0, ',', '.') }}</small>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -113,7 +116,12 @@
                                         <td><code>{{ $payment->invoice_number }}</code></td>
                                         <td>{{ $payment->patient->name }}</td>
                                         <td><span class="badge bg-secondary">{{ strtoupper($payment->payment_method) }}</span></td>
-                                        <td class="text-end">Rp {{ number_format($payment->total, 0, ',', '.') }}</td>
+                                        <td class="text-end">
+                                            Rp {{ number_format($payment->total, 0, ',', '.') }}
+                                            @if((float) $payment->refunded_amount > 0)
+                                                <small class="text-danger d-block">{{ $payment->statusLabel() }}</small>
+                                            @endif
+                                        </td>
                                     </tr>
                                     @empty
                                     <tr>
@@ -126,8 +134,8 @@
                                 @if($payments->count() > 0)
                                 <tfoot>
                                     <tr class="fw-bold bg-light">
-                                        <td colspan="5" class="text-end">TOTAL</td>
-                                        <td class="text-end text-success">Rp {{ number_format($totalIncome, 0, ',', '.') }}</td>
+                                        <td colspan="5" class="text-end">TOTAL TRANSAKSI</td>
+                                        <td class="text-end text-success">Rp {{ number_format($grossIncome, 0, ',', '.') }}</td>
                                     </tr>
                                 </tfoot>
                                 @endif
@@ -137,5 +145,8 @@
                 </div>
             </div>
         </div>
+    </div>
+    <div class="container-fluid">
+        @include('pages.clinic.reports._refunds', ['refunds' => $refunds])
     </div>
 @endsection

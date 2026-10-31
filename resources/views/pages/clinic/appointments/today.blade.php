@@ -156,7 +156,7 @@
                                                                 <i class="uil uil-file-medical"></i> Rekam Medis
                                                             </a>
                                                         @endcan
-                                                    @elseif($apt->status == 'completed' && !$apt->payment)
+                                                    @elseif($apt->status == 'completed' && $apt->needsPayment())
                                                         @can('payments.manage')
                                                             <a href="{{ route('clinic.payments.create', [app()->getLocale(), $apt->id]) }}"
                                                                 class="btn btn-sm btn-warning">

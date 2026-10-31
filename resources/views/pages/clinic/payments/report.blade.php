@@ -32,7 +32,10 @@
                 <div class="card bg-success text-white">
                     <div class="card-body text-center">
                         <h3>Rp {{ number_format($totalRevenue, 0, ',', '.') }}</h3>
-                        <p class="mb-0">Total Pendapatan</p>
+                        <p class="mb-0">Total Pendapatan{{ $totalRefunds > 0 ? ' Bersih' : '' }}</p>
+                        @if($totalRefunds > 0)
+                            <small>Kotor Rp {{ number_format($grossRevenue, 0, ',', '.') }} &minus; refund Rp {{ number_format($totalRefunds, 0, ',', '.') }}</small>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -76,7 +79,12 @@
                                     <td>{{ $payment->created_at->format('d/m/Y') }}</td>
                                     <td>{{ $payment->patient->name }}</td>
                                     <td>{{ strtoupper($payment->payment_method) }}</td>
-                                    <td>Rp {{ number_format($payment->total, 0, ',', '.') }}</td>
+                                    <td>
+                                        Rp {{ number_format($payment->total, 0, ',', '.') }}
+                                        @if((float) $payment->refunded_amount > 0)
+                                            <small class="text-danger d-block">{{ $payment->statusLabel() }}</small>
+                                        @endif
+                                    </td>
                                 </tr>
                             @empty
                                 <tr>
@@ -88,5 +96,7 @@
                 </div>
             </div>
         </div>
+
+        @include('pages.clinic.reports._refunds', ['refunds' => $refunds])
     </div>
 @endsection

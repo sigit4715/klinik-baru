@@ -43,13 +43,15 @@ return [
     'Kasir / Pembayaran' => [
         'payments.view' => 'Lihat pembayaran & cetak invoice/struk',
         'payments.manage' => 'Proses pembayaran',
-        'payments.cancel' => 'Ubah status, batalkan & hapus pembayaran',
+        'payments.cancel' => 'Batalkan & hapus pembayaran yang belum lunas',
+        'payments.refund' => 'Refund pembayaran (pengembalian dana)',
     ],
 
     'Apotek / Obat' => [
-        'medicines.view' => 'Lihat daftar obat & stok',
-        'medicines.manage' => 'Tambah, edit obat & ubah stok',
-        'medicines.delete' => 'Hapus obat',
+        'medicines.view' => 'Lihat daftar obat & kartu stok',
+        'medicines.manage' => 'Tambah & edit data obat',
+        'medicines.stock' => 'Stok masuk, retur, stok opname & obat dibuang',
+        'medicines.delete' => 'Hapus (arsipkan) obat',
     ],
 
     'Layanan / Tindakan' => [
@@ -68,6 +70,8 @@ return [
         'users.manage' => 'Manajemen user',
         'roles.manage' => 'Manajemen role & hak akses',
         'backup.manage' => 'Backup database',
+        'archive.manage' => 'Arsip data: lihat & pulihkan data yang dihapus',
+        'audit.view' => 'Lihat audit log (riwayat aktivitas)',
         'system.cache' => 'Bersihkan cache aplikasi',
     ],
 ];

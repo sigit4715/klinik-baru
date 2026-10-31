@@ -165,6 +165,8 @@
                                             class="badge bg-{{ $medicine->status == 'active' ? 'success' : 'secondary' }}">{{ $medicine->status == 'active' ? 'Aktif' : 'Tidak Aktif' }}</span>
                                     </td>
                                     <td>
+                                        <a href="{{ route('clinic.medicines.stock-card', [app()->getLocale(), $medicine->id]) }}"
+                                            class="btn btn-sm btn-outline-info" title="Kartu Stok"><i class="uil uil-clipboard-notes"></i></a>
                                         @can('medicines.manage')
                                             <a href="{{ route('clinic.medicines.edit', [app()->getLocale(), $medicine->id]) }}"
                                                 class="btn btn-sm btn-outline-primary"><i class="uil uil-edit"></i></a>

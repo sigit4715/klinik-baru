@@ -39,6 +39,11 @@ class DoctorController extends Controller
             'status' => 'nullable|in:active,inactive',
         ]);
 
+        $validators->setCustomMessages([
+            'sip_number.unique' => 'Nomor SIP sudah terdaftar. Jika dokter ada di Arsip, pulihkan dari menu Arsip Data.',
+            'email.unique' => 'Email sudah terdaftar. Jika dokter ada di Arsip, pulihkan dari menu Arsip Data.',
+        ]);
+
         if ($validators->fails()) {
             return redirect()->route('clinic.doctors.create', app()->getLocale())
                 ->withErrors($validators)->withInput();
@@ -99,6 +104,11 @@ class DoctorController extends Controller
             'status' => 'nullable|in:active,inactive',
         ]);
 
+        $validators->setCustomMessages([
+            'sip_number.unique' => 'Nomor SIP sudah terdaftar. Jika dokter ada di Arsip, pulihkan dari menu Arsip Data.',
+            'email.unique' => 'Email sudah terdaftar. Jika dokter ada di Arsip, pulihkan dari menu Arsip Data.',
+        ]);
+
         if ($validators->fails()) {
             return redirect()->route('clinic.doctors.edit', [app()->getLocale(), $id])
                 ->withErrors($validators)->withInput();
@@ -135,18 +145,15 @@ class DoctorController extends Controller
     {
         $doctor = Doctor::findOrFail($id);
 
-        // Deleting would erase all visits, medical records and revenue of this doctor
-        if ($doctor->appointments()->exists()) {
+        if ($doctor->appointments()->whereIn('status', ['waiting', 'in_progress'])->exists()) {
             return redirect()->route('clinic.doctors.index', app()->getLocale())
-                ->with('error', "Dokter {$doctor->name} sudah memiliki riwayat pasien. Ubah status menjadi tidak aktif sebagai pengganti hapus.");
+                ->with('error', "Dokter {$doctor->name} masih memiliki antrian yang belum selesai.");
         }
 
-        if ($doctor->photo) {
-            Storage::disk('public')->delete($doctor->photo);
-        }
+        // Soft delete: history and the photo stay so the doctor can be restored from Arsip
         $doctor->delete();
         return redirect()->route('clinic.doctors.index', app()->getLocale())
-            ->with('success', 'Dokter berhasil dihapus!');
+            ->with('success', "Dokter {$doctor->name} dipindahkan ke Arsip.");
     }
 
     public function getActive()

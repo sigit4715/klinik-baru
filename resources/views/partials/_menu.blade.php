@@ -245,6 +245,22 @@
                 </a>
             </li>
         @endcan
+        @can('archive.manage')
+            <li>
+                <a href="{{ route('clinic.archive.index', $locale) }}" class="{{ $is('archive*') ? 'active' : '' }}">
+                    <span class="nav-icon uil uil-archive"></span>
+                    <span class="menu-text">Arsip Data</span>
+                </a>
+            </li>
+        @endcan
+        @can('audit.view')
+            <li>
+                <a href="{{ route('clinic.audit-logs.index', $locale) }}" class="{{ $is('audit-logs*') ? 'active' : '' }}">
+                    <span class="nav-icon uil uil-history"></span>
+                    <span class="menu-text">Audit Log</span>
+                </a>
+            </li>
+        @endcan
         @can('backup.manage')
             <li>
                 <a href="{{ route('clinic.backup.index', $locale) }}" class="{{ $is('backup*') ? 'active' : '' }}">

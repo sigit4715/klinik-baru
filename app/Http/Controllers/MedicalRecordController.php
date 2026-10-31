@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Validator;
 use App\Models\MedicalRecord;
@@ -108,12 +109,13 @@ class MedicalRecordController extends Controller
             'height' => 'nullable|numeric|between:20,250',
             'weight' => 'nullable|numeric|between:0.5,400',
             'prescriptions' => 'nullable|array',
-            'prescriptions.*.medicine_id' => 'nullable|integer|exists:medicines,id',
+            // Archived medicines/services cannot be prescribed
+            'prescriptions.*.medicine_id' => ['nullable', 'integer', Rule::exists('medicines', 'id')->whereNull('deleted_at')],
             'prescriptions.*.qty' => 'nullable|integer|min:1|max:10000',
             'prescriptions.*.dosage' => 'nullable|string|max:255',
             'prescriptions.*.notes' => 'nullable|string|max:255',
             'services_used' => 'nullable|array',
-            'services_used.*.service_id' => 'nullable|integer|exists:services,id',
+            'services_used.*.service_id' => ['nullable', 'integer', Rule::exists('services', 'id')->whereNull('deleted_at')],
             'services_used.*.qty' => 'nullable|integer|min:1|max:1000',
         ], [
             'blood_pressure.regex' => 'Format tekanan darah harus seperti 120/80.',
@@ -189,8 +191,6 @@ class MedicalRecordController extends Controller
                             'prescriptions' => "Stok {$medicine->name} tidak cukup (tersedia {$medicine->stock}, diminta {$qty}).",
                         ]);
                     }
-
-                    $medicine->decrement('stock', $qty);
                 }
                 $record->prescriptions = $prescriptions;
 
@@ -206,6 +206,12 @@ class MedicalRecordController extends Controller
                 $record->services_used = $servicesUsed;
 
                 $record->save();
+
+                // Reduce stock with a stock card line pointing at this medical record
+                $patientName = $appointment->patient?->name;
+                foreach ($qtyPerMedicine as $medicineId => $qty) {
+                    Medicine::moveStock($medicineId, -$qty, 'out', $record, "Resep {$appointment->queue_number} - {$patientName}");
+                }
 
                 $appointment->status = 'completed';
                 $appointment->save();

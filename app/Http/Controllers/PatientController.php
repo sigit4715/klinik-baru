@@ -67,6 +67,10 @@ class PatientController extends Controller
             'emergency_phone' => 'nullable|string|max:20',
         ]);
 
+        $validators->setCustomMessages([
+            'nik.unique' => 'NIK sudah terdaftar. Jika pasien ada di Arsip, pulihkan dari menu Arsip Data.',
+        ]);
+
         if ($validators->fails()) {
             return redirect()->route('clinic.patients.create', app()->getLocale())
                 ->withErrors($validators)->withInput();
@@ -123,6 +127,10 @@ class PatientController extends Controller
             'emergency_phone' => 'nullable|string|max:20',
         ]);
 
+        $validators->setCustomMessages([
+            'nik.unique' => 'NIK sudah terdaftar. Jika pasien ada di Arsip, pulihkan dari menu Arsip Data.',
+        ]);
+
         if ($validators->fails()) {
             return redirect()->route('clinic.patients.edit', [app()->getLocale(), $id])
                 ->withErrors($validators)->withInput();
@@ -151,15 +159,15 @@ class PatientController extends Controller
     {
         $patient = Patient::findOrFail($id);
 
-        // Deleting would erase medical and payment history, so only allow it for patients without visits
-        if ($patient->appointments()->exists()) {
+        if ($patient->appointments()->whereIn('status', ['waiting', 'in_progress'])->exists()) {
             return redirect()->route('clinic.patients.index', app()->getLocale())
-                ->with('error', "Pasien {$patient->name} sudah memiliki riwayat kunjungan sehingga tidak bisa dihapus.");
+                ->with('error', "Pasien {$patient->name} masih memiliki antrian yang belum selesai.");
         }
 
+        // Soft delete: medical and payment history stay intact; restore from Arsip
         $patient->delete();
         return redirect()->route('clinic.patients.index', app()->getLocale())
-            ->with('success', 'Pasien berhasil dihapus!');
+            ->with('success', "Pasien {$patient->name} dipindahkan ke Arsip.");
     }
 
     public function search(Request $request)

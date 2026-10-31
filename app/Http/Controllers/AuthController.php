@@ -105,6 +105,8 @@ class AuthController extends Controller
         $credentials = ['email' => $request->email, 'password' => $request->password];
         if (! Auth::validate($credentials)) {
             RateLimiter::hit($throttleKey, 60);
+            // Auth::validate() does not fire this itself; it feeds the audit log (no password stored)
+            event(new \Illuminate\Auth\Events\Failed('web', Auth::getLastAttempted(), ['email' => $request->email]));
             return redirect()->route('login')->withInput($request->only('email'))
                 ->with('message', 'Login gagal! Email atau password salah.');
         }

@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Validator;
 use App\Models\Payment;
+use App\Models\PaymentRefund;
 use App\Models\Appointment;
 use App\Models\Patient;
 use App\Models\MedicalRecord;
@@ -115,8 +116,9 @@ class PaymentController extends Controller
                     throw ValidationException::withMessages(['appointment_id' => 'Antrian ini sudah dibatalkan.']);
                 }
 
+                // A cancelled or fully refunded payment allows billing the visit again
                 $alreadyPaid = Payment::where('appointment_id', $appointment->id)
-                    ->where('status', '!=', 'cancelled')
+                    ->whereNotIn('status', ['cancelled', 'refunded'])
                     ->exists();
                 if ($alreadyPaid) {
                     throw ValidationException::withMessages(['appointment_id' => 'Antrian ini sudah memiliki pembayaran.']);
@@ -127,8 +129,8 @@ class PaymentController extends Controller
                 $subtotal = 0;
                 foreach ($request->input('items', []) as $item) {
                     $model = $item['type'] === 'medicine'
-                        ? Medicine::find($item['id'])
-                        : Service::find($item['id']);
+                        ? Medicine::withTrashed()->find($item['id'])
+                        : Service::withTrashed()->find($item['id']);
 
                     if (! $model) {
                         throw ValidationException::withMessages(['items' => 'Item pembayaran tidak ditemukan.']);
@@ -192,7 +194,7 @@ class PaymentController extends Controller
 
     public function show($language, $id)
     {
-        $payment = Payment::with(['patient', 'appointment'])->findOrFail($id);
+        $payment = Payment::with(['patient', 'appointment', 'refunds.user'])->findOrFail($id);
         $title = "Detail Pembayaran";
         $description = "Informasi pembayaran";
 
@@ -214,16 +216,19 @@ class PaymentController extends Controller
 
         $payment = Payment::findOrFail($id);
 
-        // pending -> paid/cancelled, paid -> cancelled (void). Cancelled is final.
+        // pending -> paid/cancelled. A paid payment is reversed with a refund, not by changing its status.
         $allowed = [
             'pending' => ['paid', 'cancelled'],
-            'paid' => ['cancelled'],
+            'paid' => [],
             'cancelled' => [],
+            'refunded' => [],
         ];
         if (! in_array($request->status, $allowed[$payment->status] ?? [], true)) {
             return response()->json([
                 'success' => false,
-                'message' => "Status pembayaran tidak bisa diubah dari {$payment->status} ke {$request->status}.",
+                'message' => $payment->status === 'paid'
+                    ? 'Pembayaran lunas tidak bisa diubah statusnya. Gunakan Refund.'
+                    : "Status pembayaran tidak bisa diubah dari {$payment->status} ke {$request->status}.",
             ], 422);
         }
 
@@ -237,9 +242,9 @@ class PaymentController extends Controller
     {
         $payment = Payment::findOrFail($id);
 
-        if ($payment->status === 'paid') {
+        if (in_array($payment->status, ['paid', 'refunded'], true)) {
             return redirect()->back()
-                ->with('error', 'Pembayaran yang sudah lunas tidak bisa dihapus. Batalkan pembayaran terlebih dahulu.');
+                ->with('error', 'Pembayaran yang sudah lunas tidak bisa dihapus. Gunakan Refund bila uang dikembalikan.');
         }
 
         $payment->delete();
@@ -260,10 +265,18 @@ class PaymentController extends Controller
 
         $payments = Payment::with(['patient'])
             ->whereBetween('created_at', [$startDate, $endDate])
-            ->paid()
+            ->revenue()
             ->get();
 
-        $totalRevenue = $payments->sum('total');
+        // Refunds count on the day the money went back
+        $refunds = PaymentRefund::with(['payment.patient', 'user'])
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->orderByDesc('created_at')
+            ->get();
+
+        $grossRevenue = $payments->sum('total');
+        $totalRefunds = $refunds->sum('amount');
+        $totalRevenue = $grossRevenue - $totalRefunds;
         $title = "Laporan Pembayaran";
         $description = "Laporan pendapatan klinik";
 
@@ -271,10 +284,106 @@ class PaymentController extends Controller
             'title',
             'description',
             'payments',
+            'refunds',
+            'grossRevenue',
+            'totalRefunds',
             'totalRevenue',
             'startDate',
             'endDate'
         ));
+    }
+
+    public function refundForm($language, $id)
+    {
+        $payment = Payment::with(['patient', 'refunds.user'])->findOrFail($id);
+
+        if ($payment->refundableAmount() <= 0) {
+            return redirect()->route('clinic.payments.show', [app()->getLocale(), $payment->id])
+                ->with('error', 'Pembayaran ini tidak bisa di-refund (belum lunas atau sudah di-refund penuh).');
+        }
+
+        $title = 'Refund Pembayaran';
+        $description = 'Pengembalian dana ' . $payment->invoice_number;
+        $hasMedicines = collect($payment->items)->contains(fn ($item) => ($item['type'] ?? null) === 'medicine');
+        $alreadyRestocked = $payment->refunds->contains('restocked', true);
+
+        return view('pages.clinic.payments.refund', compact('title', 'description', 'payment', 'hasMedicines', 'alreadyRestocked'));
+    }
+
+    /**
+     * Full or partial refund. Recorded with reason and user; optional medicine restock on a full refund.
+     */
+    public function refund(Request $request, $language, $id)
+    {
+        $validated = $request->validate([
+            'amount' => 'required|numeric|min:1',
+            'reason' => 'required|string|min:5|max:500',
+            'refund_method' => 'required|in:cash,debit,credit,transfer,bpjs',
+            'restock' => 'nullable|boolean',
+        ], [
+            'reason.required' => 'Alasan refund wajib diisi.',
+            'reason.min' => 'Alasan refund minimal 5 karakter.',
+        ]);
+
+        try {
+            $refund = DB::transaction(function () use ($validated, $request, $id) {
+                $payment = Payment::lockForUpdate()->findOrFail($id);
+                $refundable = $payment->refundableAmount();
+                $amount = round((float) $validated['amount'], 2);
+
+                if ($refundable <= 0) {
+                    throw ValidationException::withMessages(['amount' => 'Pembayaran ini tidak bisa di-refund.']);
+                }
+                if ($amount > $refundable) {
+                    throw ValidationException::withMessages([
+                        'amount' => 'Jumlah refund melebihi sisa yang bisa dikembalikan (Rp ' . number_format($refundable, 0, ',', '.') . ').',
+                    ]);
+                }
+
+                $isFull = abs($amount - $refundable) < 0.01;
+                $restock = $request->boolean('restock');
+                if ($restock && ! $isFull) {
+                    throw ValidationException::withMessages([
+                        'restock' => 'Obat hanya bisa dikembalikan ke stok pada refund penuh. Untuk retur sebagian, catat lewat Kartu Stok.',
+                    ]);
+                }
+                if ($restock && $payment->refunds()->where('restocked', true)->exists()) {
+                    throw ValidationException::withMessages(['restock' => 'Obat dari pembayaran ini sudah pernah dikembalikan ke stok.']);
+                }
+
+                $refund = new PaymentRefund([
+                    'payment_id' => $payment->id,
+                    'amount' => $amount,
+                    'reason' => $validated['reason'],
+                    'refund_method' => $validated['refund_method'],
+                    'restocked' => $restock,
+                ]);
+                $refund->user_id = auth()->id();
+                $refund->save();
+
+                $payment->refunded_amount = round((float) $payment->refunded_amount + $amount, 2);
+                if ($isFull) {
+                    $payment->status = 'refunded';
+                }
+                $payment->save();
+
+                if ($restock) {
+                    foreach ($payment->items as $item) {
+                        if (($item['type'] ?? null) === 'medicine' && (int) ($item['qty'] ?? 0) > 0) {
+                            Medicine::moveStock((int) $item['id'], (int) $item['qty'], 'return', $refund,
+                                "Retur dari refund {$payment->invoice_number}");
+                        }
+                    }
+                }
+
+                return $refund;
+            });
+        } catch (ValidationException $e) {
+            return back()->withInput()->withErrors($e->errors());
+        }
+
+        return redirect()->route('clinic.payments.show', [app()->getLocale(), $refund->payment_id])
+            ->with('success', 'Refund Rp ' . number_format($refund->amount, 0, ',', '.') . ' berhasil dicatat.');
     }
 
     public function receipt($language, $id)

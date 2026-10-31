@@ -47,6 +47,9 @@
                     <div class="card-body text-center">
                         <h6>Total Pendapatan {{ $year }}</h6>
                         <h3 class="mb-0">Rp {{ number_format($totalIncome, 0, ',', '.') }}</h3>
+                        @if($totalRefunds > 0)
+                            <small>Bersih, sudah dikurangi refund Rp {{ number_format($totalRefunds, 0, ',', '.') }}</small>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -108,16 +111,21 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @php $maxTotal = $monthlyData->max('total') ?: 1; @endphp
+                                    @php $maxTotal = max($monthlyData->max('total'), 1); @endphp
                                     @foreach($monthlyData as $month)
                                         <tr>
                                             <td>{{ $month['month_name'] }}</td>
                                             <td class="text-center">{{ $month['transactions'] }}</td>
-                                            <td class="text-end">Rp {{ number_format($month['total'], 0, ',', '.') }}</td>
+                                            <td class="text-end">
+                                                Rp {{ number_format($month['total'], 0, ',', '.') }}
+                                                @if($month['refund'] > 0)
+                                                    <small class="text-danger d-block">refund Rp {{ number_format($month['refund'], 0, ',', '.') }}</small>
+                                                @endif
+                                            </td>
                                             <td style="width: 30%;">
                                                 <div class="progress" style="height: 20px;">
                                                     <div class="progress-bar bg-success" role="progressbar"
-                                                        style="width: {{ ($month['total'] / $maxTotal) * 100 }}%">
+                                                        style="width: {{ max(0, ($month['total'] / $maxTotal) * 100) }}%">
                                                     </div>
                                                 </div>
                                             </td>

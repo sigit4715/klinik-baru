@@ -228,10 +228,10 @@
                 <span style="font-weight: 600; color: #1f2937;">
                     <i class="uil uil-file-alt me-2"></i>Informasi Pembayaran
                 </span>
-                @if($payment->status == 'paid')
+                @if($payment->status == 'paid' && (float) $payment->refunded_amount == 0)
                     <span class="badge-status paid"><i class="uil uil-check me-1"></i>Lunas</span>
                 @else
-                    <span class="badge-status pending"><i class="uil uil-clock me-1"></i>{{ $payment->status }}</span>
+                    <span class="badge-status pending"><i class="uil uil-clock me-1"></i>{{ $payment->statusLabel() }}</span>
                 @endif
             </div>
             <div class="info-grid">
@@ -318,10 +318,47 @@
             </div>
         </div>
 
-        <div class="mt-3">
+        @if($payment->refunds->isNotEmpty())
+            <div class="payment-card">
+                <div class="card-header">
+                    <span style="font-weight: 600; color: #1f2937;">
+                        <i class="uil uil-money-insert me-2"></i>Riwayat Refund
+                    </span>
+                    <span class="text-danger fw-bold">Total refund: Rp {{ number_format($payment->refunded_amount, 0, ',', '.') }}</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table mb-0">
+                        <thead class="bg-light">
+                            <tr><th>Tanggal</th><th>Jumlah</th><th>Metode</th><th>Alasan</th><th>Stok</th><th>Oleh</th></tr>
+                        </thead>
+                        <tbody>
+                            @foreach($payment->refunds as $refund)
+                                <tr>
+                                    <td>{{ $refund->created_at->format('d/m/Y H:i') }}</td>
+                                    <td class="text-danger fw-bold">Rp {{ number_format($refund->amount, 0, ',', '.') }}</td>
+                                    <td>{{ strtoupper($refund->refund_method) }}</td>
+                                    <td>{{ $refund->reason }}</td>
+                                    <td>{{ $refund->restocked ? 'Obat dikembalikan' : '-' }}</td>
+                                    <td>{{ $refund->user?->name ?? '-' }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        @endif
+
+        <div class="mt-3 d-flex gap-2">
             <a href="{{ route('clinic.payments.index', app()->getLocale()) }}" class="btn btn-light">
                 <i class="uil uil-arrow-left me-1"></i>Kembali ke Daftar
             </a>
+            @can('payments.refund')
+                @if($payment->refundableAmount() > 0)
+                    <a href="{{ route('clinic.payments.refund-form', [app()->getLocale(), $payment->id]) }}" class="btn btn-outline-danger">
+                        <i class="uil uil-money-insert me-1"></i>Refund
+                    </a>
+                @endif
+            @endcan
         </div>
     </div>
 @endsection

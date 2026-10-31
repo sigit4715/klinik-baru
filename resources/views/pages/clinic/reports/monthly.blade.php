@@ -43,6 +43,9 @@
                     <div class="card-body text-center">
                         <h6>Total Pendapatan</h6>
                         <h3 class="mb-0">Rp {{ number_format($totalIncome, 0, ',', '.') }}</h3>
+                        @if($totalRefunds > 0)
+                            <small>Bersih, sudah dikurangi refund Rp {{ number_format($totalRefunds, 0, ',', '.') }}</small>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -107,7 +110,12 @@
                                     <tr>
                                         <td>{{ \Carbon\Carbon::parse($day->date)->translatedFormat('d F Y (l)') }}</td>
                                         <td class="text-center">{{ $day->transactions }}</td>
-                                        <td class="text-end">Rp {{ number_format($day->total, 0, ',', '.') }}</td>
+                                        <td class="text-end">
+                                            Rp {{ number_format($day->total, 0, ',', '.') }}
+                                            @if($day->refund > 0)
+                                                <small class="text-danger d-block">refund Rp {{ number_format($day->refund, 0, ',', '.') }}</small>
+                                            @endif
+                                        </td>
                                     </tr>
                                     @empty
                                     <tr>

@@ -2,12 +2,17 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class Medicine extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes, Auditable;
 
     protected $fillable = [
         'code',
@@ -27,6 +32,54 @@ class Medicine extends Model
         'sell_price' => 'decimal:2',
         'expired_date' => 'date',
     ];
+
+    /** Stock changes are already traced on the stock card */
+    protected array $auditExclude = ['stock'];
+
+    public function stockMovements()
+    {
+        return $this->hasMany(StockMovement::class);
+    }
+
+    /**
+     * Change stock and write a stock card line in one locked transaction.
+     *
+     * @param int $change positive adds stock, negative removes it
+     * @throws \Illuminate\Validation\ValidationException when stock would go below zero
+     */
+    public static function moveStock(int $medicineId, int $change, string $type, ?Model $reference = null, ?string $notes = null): StockMovement
+    {
+        return DB::transaction(function () use ($medicineId, $change, $type, $reference, $notes) {
+            $medicine = static::withTrashed()->lockForUpdate()->findOrFail($medicineId);
+            $before = (int) $medicine->stock;
+            $after = $before + $change;
+
+            if ($after < 0) {
+                throw ValidationException::withMessages([
+                    'stock' => "Stok {$medicine->name} tidak cukup (tersedia {$before}, dibutuhkan " . abs($change) . ').',
+                ]);
+            }
+
+            $medicine->stock = $after;
+            $medicine->save();
+
+            $movement = new StockMovement([
+                'medicine_id' => $medicine->id,
+                'type' => $type,
+                'quantity' => $change,
+                'stock_before' => $before,
+                'stock_after' => $after,
+                'notes' => $notes ? Str::limit($notes, 250) : null,
+            ]);
+            $movement->user_id = auth()->id();
+            if ($reference) {
+                $movement->reference()->associate($reference);
+            }
+            $movement->save();
+
+            return $movement;
+        });
+    }
 
     public function scopeActive($query)
     {

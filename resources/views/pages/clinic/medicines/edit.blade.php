@@ -42,9 +42,13 @@
                             </div>
                             <div class="row">
                                 <div class="col-md-4 mb-3">
-                                    <label class="form-label">Stok <span class="text-danger">*</span></label>
-                                    <input type="number" name="stock" class="form-control"
-                                        value="{{ old('stock', $medicine->stock) }}" min="0" required>
+                                    <label class="form-label">Stok</label>
+                                    <input type="number" class="form-control" value="{{ $medicine->stock }}" readonly>
+                                    <small class="text-muted">
+                                        Stok diubah lewat
+                                        <a href="{{ route('clinic.medicines.stock-card', [app()->getLocale(), $medicine->id]) }}">Kartu Stok</a>
+                                        (stok masuk, retur, opname, dibuang).
+                                    </small>
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label class="form-label">Stok Minimum</label>

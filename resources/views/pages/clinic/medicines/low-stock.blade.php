@@ -36,9 +36,9 @@
                                     <td class="text-danger fw-bold">{{ $medicine->min_stock - $medicine->stock }}
                                         {{ $medicine->unit }}</td>
                                     <td>
-                                        <a href="{{ route('clinic.medicines.edit', [app()->getLocale(), $medicine->id]) }}"
+                                        <a href="{{ route('clinic.medicines.stock-card', [app()->getLocale(), $medicine->id]) }}"
                                             class="btn btn-sm btn-primary">
-                                            <i class="uil uil-plus me-1"></i>Tambah Stok
+                                            <i class="uil uil-plus me-1"></i>{{ auth()->user()->can('medicines.stock') ? 'Tambah Stok' : 'Kartu Stok' }}
                                         </a>
                                     </td>
                                 </tr>

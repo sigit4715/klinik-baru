@@ -68,8 +68,8 @@ class AppointmentController extends Controller
     public function store(Request $request)
     {
         $validators = Validator::make($request->all(), [
-            'patient_id' => 'required|exists:patients,id',
-            'doctor_id' => ['required', Rule::exists('doctors', 'id')->where('status', 'active')],
+            'patient_id' => ['required', Rule::exists('patients', 'id')->whereNull('deleted_at')],
+            'doctor_id' => ['required', Rule::exists('doctors', 'id')->where('status', 'active')->whereNull('deleted_at')],
             'appointment_date' => 'required|date',
             'appointment_time' => 'nullable|date_format:H:i,H:i:s',
             'complaint' => 'required|string',
@@ -129,8 +129,8 @@ class AppointmentController extends Controller
     public function update(Request $request, $language, $id)
     {
         $validators = Validator::make($request->all(), [
-            'patient_id' => 'required|exists:patients,id',
-            'doctor_id' => 'required|exists:doctors,id',
+            'patient_id' => ['required', Rule::exists('patients', 'id')->whereNull('deleted_at')],
+            'doctor_id' => ['required', Rule::exists('doctors', 'id')->whereNull('deleted_at')],
             'appointment_date' => 'required|date',
             'complaint' => 'required|string',
         ]);
@@ -190,9 +190,9 @@ class AppointmentController extends Controller
                 ->with('error', 'Antrian yang sudah memiliki rekam medis atau pembayaran tidak bisa dihapus. Ubah statusnya menjadi dibatalkan jika perlu.');
         }
 
-        $appointment->delete();
+        $appointment->delete(); // soft delete: restore from Arsip
         return redirect()->route('clinic.appointments.index', app()->getLocale())
-            ->with('success', 'Antrian berhasil dihapus!');
+            ->with('success', "Antrian {$appointment->queue_number} dipindahkan ke Arsip.");
     }
 
     public function callNext(Request $request, $language)

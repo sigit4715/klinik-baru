@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Validator;
 use App\Models\Medicine;
+use App\Models\StockMovement;
 
 class MedicineController extends Controller
 {
@@ -77,18 +81,25 @@ class MedicineController extends Controller
                 ->withErrors($validators)->withInput();
         }
 
-        $medicine = new Medicine();
-        $medicine->code = Medicine::generateCode();
-        $medicine->name = $request->name;
-        $medicine->category = $request->category;
-        $medicine->unit = $request->unit;
-        $medicine->stock = $request->stock;
-        $medicine->min_stock = $request->min_stock ?? 10;
-        $medicine->buy_price = $request->buy_price;
-        $medicine->sell_price = $request->sell_price;
-        $medicine->expired_date = $request->expired_date;
-        $medicine->status = $request->status ?? 'active';
-        $medicine->save();
+        DB::transaction(function () use ($request) {
+            $medicine = new Medicine();
+            $medicine->code = Medicine::generateCode();
+            $medicine->name = $request->name;
+            $medicine->category = $request->category;
+            $medicine->unit = $request->unit;
+            $medicine->stock = 0;
+            $medicine->min_stock = $request->min_stock ?? 10;
+            $medicine->buy_price = $request->buy_price;
+            $medicine->sell_price = $request->sell_price;
+            $medicine->expired_date = $request->expired_date;
+            $medicine->status = $request->status ?? 'active';
+            $medicine->save();
+
+            // Opening stock goes through the stock card
+            if ((int) $request->stock > 0) {
+                Medicine::moveStock($medicine->id, (int) $request->stock, 'initial', null, 'Stok awal');
+            }
+        });
 
         return redirect()->route('clinic.medicines.index', app()->getLocale())
             ->with('success', 'Obat berhasil ditambahkan!');
@@ -111,7 +122,6 @@ class MedicineController extends Controller
             'name' => 'required|string|max:255',
             'category' => 'required|string',
             'unit' => 'required|string',
-            'stock' => 'required|integer|min:0',
             'buy_price' => 'required|numeric|min:0',
             'sell_price' => 'required|numeric|min:0',
             'min_stock' => 'nullable|integer|min:0',
@@ -124,11 +134,11 @@ class MedicineController extends Controller
                 ->withErrors($validators)->withInput();
         }
 
+        // Stock is not edited here; it changes only through the stock card so every change is traced
         $medicine = Medicine::findOrFail($id);
         $medicine->name = $request->name;
         $medicine->category = $request->category;
         $medicine->unit = $request->unit;
-        $medicine->stock = $request->stock;
         $medicine->min_stock = $request->min_stock ?? 10;
         $medicine->buy_price = $request->buy_price;
         $medicine->sell_price = $request->sell_price;
@@ -143,9 +153,9 @@ class MedicineController extends Controller
     public function destroy($language, $id)
     {
         $medicine = Medicine::findOrFail($id);
-        $medicine->delete();
+        $medicine->delete(); // soft delete: moved to Arsip, old prescriptions keep showing it
         return redirect()->route('clinic.medicines.index', app()->getLocale())
-            ->with('success', 'Obat berhasil dihapus!');
+            ->with('success', "Obat {$medicine->name} dipindahkan ke Arsip.");
     }
 
     public function getActive()
@@ -162,13 +172,102 @@ class MedicineController extends Controller
         return view('pages.clinic.medicines.low-stock', compact('title', 'description', 'medicines'));
     }
 
+    /**
+     * Set the physical stock count (JSON). Recorded as a stock opname adjustment.
+     */
     public function updateStock(Request $request, $language, $id)
     {
         $request->validate(['stock' => 'required|integer|min:0|max:1000000']);
 
         $medicine = Medicine::findOrFail($id);
-        $medicine->stock = (int) $request->stock;
-        $medicine->save();
-        return response()->json(['success' => true, 'stock' => $medicine->stock]);
+        $change = (int) $request->stock - (int) $medicine->stock;
+        if ($change !== 0) {
+            Medicine::moveStock($medicine->id, $change, 'adjustment', null, 'Penyesuaian stok');
+        }
+
+        return response()->json(['success' => true, 'stock' => $medicine->fresh()->stock]);
+    }
+
+    /**
+     * Kartu stok: all stock movements of one medicine with the running balance.
+     */
+    public function stockCard(Request $request, $language, $id)
+    {
+        $request->validate([
+            'from' => 'nullable|date',
+            'to' => 'nullable|date|after_or_equal:from',
+            'type' => 'nullable|in:' . implode(',', array_keys(StockMovement::TYPES)),
+        ]);
+
+        $medicine = Medicine::withTrashed()->findOrFail($id);
+        $movements = $medicine->stockMovements()
+            ->with(['user', 'reference'])
+            ->when($request->from, fn ($q, $from) => $q->where('created_at', '>=', Carbon::parse($from)->startOfDay()))
+            ->when($request->to, fn ($q, $to) => $q->where('created_at', '<=', Carbon::parse($to)->endOfDay()))
+            ->when($request->type, fn ($q, $type) => $q->where('type', $type))
+            ->orderByDesc('id')
+            ->paginate(50)
+            ->withQueryString();
+
+        $title = 'Kartu Stok';
+        $description = 'Riwayat keluar-masuk stok ' . $medicine->name;
+        $types = StockMovement::TYPES;
+        $manualTypes = array_intersect_key(StockMovement::TYPES, array_flip(StockMovement::MANUAL_TYPES));
+
+        return view('pages.clinic.medicines.stock-card', compact('title', 'description', 'medicine', 'movements', 'types', 'manualTypes'));
+    }
+
+    /**
+     * Manual stock entry from the stock card page: stock in, return, opname or disposal.
+     */
+    public function storeMovement(Request $request, $language, $id)
+    {
+        $validated = $request->validate([
+            'type' => 'required|in:' . implode(',', StockMovement::MANUAL_TYPES),
+            // For "adjustment" this is the counted physical stock; otherwise the quantity
+            'quantity' => 'required|integer|min:0|max:1000000',
+            'notes' => 'required|string|max:250',
+            'expired_date' => 'nullable|date',
+            'buy_price' => 'nullable|numeric|min:0',
+        ], [
+            'notes.required' => 'Keterangan wajib diisi (mis. no. faktur, alasan penyesuaian).',
+        ]);
+
+        $medicine = Medicine::findOrFail($id);
+
+        $change = match ($validated['type']) {
+            'in', 'return' => (int) $validated['quantity'],
+            'disposal' => -(int) $validated['quantity'],
+            'adjustment' => (int) $validated['quantity'] - (int) $medicine->stock,
+        };
+
+        if ($change === 0) {
+            return back()->withInput()->withErrors(['quantity' => $validated['type'] === 'adjustment'
+                ? 'Stok fisik sama dengan stok sistem, tidak ada yang perlu disesuaikan.'
+                : 'Jumlah harus lebih dari 0.']);
+        }
+
+        try {
+            DB::transaction(function () use ($medicine, $change, $validated) {
+                Medicine::moveStock($medicine->id, $change, $validated['type'], null, $validated['notes']);
+
+                // A new batch can update expiry date and purchase price
+                if ($validated['type'] === 'in') {
+                    $fresh = Medicine::findOrFail($medicine->id);
+                    if (! empty($validated['expired_date'])) {
+                        $fresh->expired_date = $validated['expired_date'];
+                    }
+                    if (isset($validated['buy_price']) && $validated['buy_price'] !== null) {
+                        $fresh->buy_price = $validated['buy_price'];
+                    }
+                    $fresh->save();
+                }
+            });
+        } catch (ValidationException $e) {
+            return back()->withInput()->withErrors($e->errors());
+        }
+
+        return redirect()->route('clinic.medicines.stock-card', [app()->getLocale(), $medicine->id])
+            ->with('success', 'Kartu stok diperbarui. Stok sekarang: ' . Medicine::find($medicine->id)->stock . ' ' . $medicine->unit . '.');
     }
 }

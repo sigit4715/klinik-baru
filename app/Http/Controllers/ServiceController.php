@@ -96,9 +96,9 @@ class ServiceController extends Controller
     public function destroy($language, $id)
     {
         $service = Service::findOrFail($id);
-        $service->delete();
+        $service->delete(); // soft delete: moved to Arsip
         return redirect()->route('clinic.services.index', app()->getLocale())
-            ->with('success', 'Layanan berhasil dihapus!');
+            ->with('success', "Layanan {$service->name} dipindahkan ke Arsip.");
     }
 
     public function getActive()

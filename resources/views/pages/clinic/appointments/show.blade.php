@@ -226,7 +226,7 @@
                                 class="btn btn-info"><i class="uil uil-file-medical me-1"></i>Lihat Rekam Medis</a>
                         @endcan
                     @endif
-                    @if($appointment->status == 'completed' && !$appointment->payment)
+                    @if($appointment->status == 'completed' && $appointment->needsPayment())
                         @can('payments.manage')
                             <a href="{{ route('clinic.payments.create', [app()->getLocale(), $appointment->id]) }}"
                                 class="btn btn-warning"><i class="uil uil-bill me-1"></i>Buat Pembayaran</a>

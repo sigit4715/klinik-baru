@@ -15,6 +15,8 @@ use App\Http\Controllers\PatientReportController;
 use App\Http\Controllers\UserManagementController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\BackupController;
+use App\Http\Controllers\ArchiveController;
+use App\Http\Controllers\AuditLogController;
 
 /************************ Clinic Routes ******************************/
 /*
@@ -75,7 +77,9 @@ Route::group(['middleware' => 'auth'], function () {
                 Route::put('{id}', [MedicineController::class, 'update'])->name('update')->middleware('permission:medicines.manage');
                 Route::delete('{id}', [MedicineController::class, 'destroy'])->name('destroy')->middleware('permission:medicines.delete');
                 Route::get('api/active', [MedicineController::class, 'getActive'])->name('active')->middleware('permission:medicines.view,medical_records.manage');
-                Route::patch('{id}/stock', [MedicineController::class, 'updateStock'])->name('update-stock')->middleware('permission:medicines.manage');
+                Route::patch('{id}/stock', [MedicineController::class, 'updateStock'])->name('update-stock')->middleware('permission:medicines.stock');
+                Route::get('{id}/stock-card', [MedicineController::class, 'stockCard'])->name('stock-card')->middleware('permission:medicines.view');
+                Route::post('{id}/stock-movements', [MedicineController::class, 'storeMovement'])->name('stock-movements.store')->middleware('permission:medicines.stock');
             });
 
             // Appointments
@@ -117,6 +121,8 @@ Route::group(['middleware' => 'auth'], function () {
                 Route::get('{id}/receipt', [PaymentController::class, 'receipt'])->name('receipt')->middleware('permission:payments.view');
                 Route::delete('{id}', [PaymentController::class, 'destroy'])->name('destroy')->middleware('permission:payments.cancel');
                 Route::patch('{id}/status', [PaymentController::class, 'updateStatus'])->name('update-status')->middleware('permission:payments.cancel');
+                Route::get('{id}/refund', [PaymentController::class, 'refundForm'])->name('refund-form')->middleware('permission:payments.refund');
+                Route::post('{id}/refund', [PaymentController::class, 'refund'])->name('refund')->middleware('permission:payments.refund');
             });
 
             // Reports
@@ -160,6 +166,15 @@ Route::group(['middleware' => 'auth'], function () {
                 Route::put('{id}', [RoleController::class, 'update'])->name('update');
                 Route::delete('{id}', [RoleController::class, 'destroy'])->name('destroy');
             });
+
+            // Arsip Data (soft-deleted records)
+            Route::group(['prefix' => 'archive', 'as' => 'archive.', 'middleware' => 'permission:archive.manage'], function () {
+                Route::get('/', [ArchiveController::class, 'index'])->name('index');
+                Route::post('{type}/{id}/restore', [ArchiveController::class, 'restore'])->name('restore')->whereNumber('id');
+            });
+
+            // Audit Log (read only)
+            Route::get('audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index')->middleware('permission:audit.view');
 
             // Backup Database
             Route::group(['prefix' => 'backup', 'as' => 'backup.', 'middleware' => 'permission:backup.manage'], function () {

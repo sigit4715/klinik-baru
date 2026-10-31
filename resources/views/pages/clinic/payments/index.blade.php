@@ -42,9 +42,16 @@
                                     <td><strong>Rp {{ number_format($payment->total, 0, ',', '.') }}</strong></td>
                                     <td>{{ strtoupper($payment->payment_method) }}</td>
                                     <td>
-                                        @if($payment->status == 'paid')<span class="badge bg-success">Lunas</span>
-                                        @elseif($payment->status == 'pending')<span class="badge bg-warning">Pending</span>
-                                        @else<span class="badge bg-secondary">{{ $payment->status }}</span>@endif
+                                        @php
+                                            $badge = match (true) {
+                                                $payment->status === 'paid' && (float) $payment->refunded_amount > 0 => 'warning',
+                                                $payment->status === 'paid' => 'success',
+                                                $payment->status === 'pending' => 'warning',
+                                                $payment->status === 'refunded' => 'danger',
+                                                default => 'secondary',
+                                            };
+                                        @endphp
+                                        <span class="badge bg-{{ $badge }}">{{ $payment->statusLabel() }}</span>
                                     </td>
                                     <td>
                                         <a href="{{ route('clinic.payments.show', [app()->getLocale(), $payment->id]) }}"

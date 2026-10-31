@@ -870,7 +870,7 @@
                         ? \App\Models\Medicine::where('status', 'active')->whereColumn('stock', '<=', 'min_stock')->count()
                         : 0;
                     $todayPayments = $canFinance
-                        ? \App\Models\Payment::whereDate('created_at', today())->where('status', 'paid')->sum('total')
+                        ? \App\Models\Payment::revenueBetween(today()->startOfDay(), today()->endOfDay())['net']
                         : 0;
                     $notifCount = $pendingPayments + $lowStockCount;
                 @endphp

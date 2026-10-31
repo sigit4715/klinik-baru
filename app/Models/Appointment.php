@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\Auditable;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Appointment extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes, Auditable;
 
     protected $fillable = [
         'queue_number',
@@ -24,14 +26,15 @@ class Appointment extends Model
         'appointment_time' => 'datetime:H:i',
     ];
 
+    // withTrashed: visits of archived patients/doctors must still show who they were
     public function patient()
     {
-        return $this->belongsTo(Patient::class);
+        return $this->belongsTo(Patient::class)->withTrashed();
     }
 
     public function doctor()
     {
-        return $this->belongsTo(Doctor::class);
+        return $this->belongsTo(Doctor::class)->withTrashed();
     }
 
     public function medicalRecord()
@@ -50,6 +53,12 @@ class Appointment extends Model
     public function payments()
     {
         return $this->hasMany(Payment::class);
+    }
+
+    /** No active payment yet (none, or the last one was cancelled or fully refunded) */
+    public function needsPayment(): bool
+    {
+        return ! $this->payment || in_array($this->payment->status, ['cancelled', 'refunded'], true);
     }
 
     public const STATUSES = ['waiting', 'in_progress', 'completed', 'cancelled'];
