@@ -807,13 +807,13 @@
             <li class="nav-message">
                 @php
                     $waitingQueue = \App\Models\Appointment::whereDate('appointment_date', today())
-                        ->where('status', 'waiting')
+                        ->whereIn('status', ['waiting', 'screening', 'ready'])
                         ->with('patient')
                         ->orderBy('queue_number')
                         ->take(5)
                         ->get();
                     $waitingCount = \App\Models\Appointment::whereDate('appointment_date', today())
-                        ->where('status', 'waiting')
+                        ->whereIn('status', ['waiting', 'screening', 'ready'])
                         ->count();
                 @endphp
                 <div class="dropdown-custom">
@@ -839,7 +839,7 @@
                                         </p>
                                         <p>
                                             <span class="desc text-truncate"
-                                                style="max-width: 215px;">{{ Str::limit($queue->complaint, 40) }}</span>
+                                                style="max-width: 215px;">{{ $queue->statusLabel() }}{{ $queue->complaint ? ' - ' . Str::limit($queue->complaint, 30) : '' }}</span>
                                         </p>
                                     </div>
                                 </li>

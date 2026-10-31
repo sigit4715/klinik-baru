@@ -80,8 +80,8 @@
                             <div class="d-flex justify-content-center">
                                 <div class="payment-invoice-qr__address bg-opacity-success p-25 radius-xl">
                                     <h6 class="mb-2 text-success"><i class="uil uil-user-md me-1"></i>Dokter</h6>
-                                    <p class="mb-1"><strong>{{ $payment->appointment->doctor->name ?? 'N/A' }}</strong></p>
-                                    <p class="mb-0 text-muted">{{ $payment->appointment->doctor->specialization ?? '-' }}
+                                    <p class="mb-1"><strong>{{ $payment->appointment->doctor?->name ?? 'N/A' }}</strong></p>
+                                    <p class="mb-0 text-muted">{{ $payment->appointment->doctor?->specialization ?? '-' }}
                                     </p>
                                 </div>
                             </div>

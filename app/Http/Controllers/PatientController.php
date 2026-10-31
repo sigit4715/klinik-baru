@@ -91,6 +91,12 @@ class PatientController extends Controller
         $patient->emergency_phone = $request->emergency_phone;
         $patient->saveWithUniqueNoRM();
 
+        // Opened from the registration form: go straight back with the new patient selected
+        if ($request->input('from') === 'registration' && $request->user()->can('appointments.manage')) {
+            return redirect()->route('clinic.appointments.create', [app()->getLocale(), 'patient_id' => $patient->id])
+                ->with('success', "Pasien {$patient->name} ({$patient->no_rm}) berhasil ditambahkan.");
+        }
+
         return redirect()->route('clinic.patients.index', app()->getLocale())
             ->with('success', 'Pasien berhasil ditambahkan!');
     }
@@ -159,7 +165,7 @@ class PatientController extends Controller
     {
         $patient = Patient::findOrFail($id);
 
-        if ($patient->appointments()->whereIn('status', ['waiting', 'in_progress'])->exists()) {
+        if ($patient->appointments()->whereIn('status', \App\Models\Appointment::OPEN_STATUSES)->exists()) {
             return redirect()->route('clinic.patients.index', app()->getLocale())
                 ->with('error', "Pasien {$patient->name} masih memiliki antrian yang belum selesai.");
         }
@@ -172,11 +178,20 @@ class PatientController extends Controller
 
     public function search(Request $request)
     {
-        $query = (string) $request->get('q');
-        $patients = Patient::where('name', 'like', "%{$query}%")
-            ->orWhere('no_rm', 'like', "%{$query}%")
-            ->orWhere('nik', 'like', "%{$query}%")
-            ->limit(10)
+        $query = trim((string) $request->get('q'));
+        if (mb_strlen($query) < 2) {
+            return response()->json([]);
+        }
+
+        // Escape LIKE wildcards so "%" or "_" typed by the user match literally
+        $like = '%' . addcslashes($query, '%_\\') . '%';
+        $patients = Patient::where(function ($q) use ($like) {
+                $q->where('name', 'like', $like)
+                    ->orWhere('no_rm', 'like', $like)
+                    ->orWhere('nik', 'like', $like);
+            })
+            ->orderBy('name')
+            ->limit(15)
             // Only what a search dropdown needs; no address, phone or medical details
             ->get(['id', 'no_rm', 'name', 'nik', 'gender', 'birth_date']);
         return response()->json($patients);

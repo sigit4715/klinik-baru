@@ -200,7 +200,9 @@
         <!-- Header Klinik -->
         <div class="header">
             <h1>{{ $settings['clinic_name'] ?? 'PMB' }}</h1>
-            <h2>{{ $appointment->doctor->name }}</h2>
+            @if($appointment->doctor || $appointment->poli)
+                <h2>{{ $appointment->doctor?->name ?? $appointment->poli?->name }}</h2>
+            @endif
             <h3>ANTRIAN PENDAFTARAN</h3>
         </div>
 
@@ -253,9 +255,9 @@
                 </td>
             </tr>
             <tr>
-                <td class="label">Keluhan Pasien</td>
+                <td class="label">Perawat</td>
                 <td class="separator">:</td>
-                <td class="value">{{ $appointment->complaint ?? '-' }}</td>
+                <td class="value">{{ $appointment->nurse?->name ?? '-' }}</td>
             </tr>
             <tr>
                 <td class="label">Umur</td>

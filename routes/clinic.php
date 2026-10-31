@@ -17,6 +17,8 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\ArchiveController;
 use App\Http\Controllers\AuditLogController;
+use App\Http\Controllers\NursingController;
+use App\Http\Controllers\PoliController;
 
 /************************ Clinic Routes ******************************/
 /*
@@ -54,6 +56,22 @@ Route::group(['middleware' => 'auth'], function () {
                 Route::put('{id}', [DoctorController::class, 'update'])->name('update')->middleware('permission:doctors.manage');
                 Route::delete('{id}', [DoctorController::class, 'destroy'])->name('destroy')->middleware('permission:doctors.delete');
                 Route::get('api/active', [DoctorController::class, 'getActive'])->name('active')->middleware('permission:doctors.view,appointments.manage');
+            });
+
+            // Poli (master data)
+            Route::group(['prefix' => 'polis', 'as' => 'polis.', 'middleware' => 'permission:polis.manage'], function () {
+                Route::get('/', [PoliController::class, 'index'])->name('index');
+                Route::post('store', [PoliController::class, 'store'])->name('store');
+                Route::get('{id}/edit', [PoliController::class, 'edit'])->name('edit')->whereNumber('id');
+                Route::put('{id}', [PoliController::class, 'update'])->name('update')->whereNumber('id');
+                Route::delete('{id}', [PoliController::class, 'destroy'])->name('destroy')->whereNumber('id');
+            });
+
+            // Nurse step: anamnesis, vital signs, triage, poli & doctor
+            Route::group(['prefix' => 'nursing', 'as' => 'nursing.', 'middleware' => 'permission:nursing.manage'], function () {
+                Route::get('/', [NursingController::class, 'index'])->name('index');
+                Route::get('{appointmentId}', [NursingController::class, 'edit'])->name('edit')->whereNumber('appointmentId');
+                Route::put('{appointmentId}', [NursingController::class, 'update'])->name('update')->whereNumber('appointmentId');
             });
 
             // Services
@@ -105,6 +123,9 @@ Route::group(['middleware' => 'auth'], function () {
                 Route::get('/', [MedicalRecordController::class, 'index'])->name('index')->middleware('permission:medical_records.view');
                 Route::get('create/{appointmentId?}', [MedicalRecordController::class, 'create'])->name('create')->middleware('permission:medical_records.manage');
                 Route::post('store', [MedicalRecordController::class, 'store'])->name('store')->middleware('permission:medical_records.manage');
+                Route::get('queue', [MedicalRecordController::class, 'queue'])->name('queue')->middleware('permission:medical_records.manage');
+                Route::get('{id}/edit', [MedicalRecordController::class, 'edit'])->name('edit')->middleware('permission:medical_records.edit')->whereNumber('id');
+                Route::put('{id}', [MedicalRecordController::class, 'update'])->name('update')->middleware('permission:medical_records.edit')->whereNumber('id');
                 Route::get('{id}', [MedicalRecordController::class, 'show'])->name('show')->middleware('permission:medical_records.view');
                 Route::get('{id}/print', [MedicalRecordController::class, 'print'])->name('print')->middleware('permission:medical_records.view');
                 Route::get('patient/{patientId}/history', [MedicalRecordController::class, 'patientHistory'])->name('patient-history')->middleware('permission:medical_records.view');

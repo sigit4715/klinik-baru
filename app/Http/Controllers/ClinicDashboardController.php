@@ -22,7 +22,8 @@ class ClinicDashboardController extends Controller
         // Statistics
         $totalPatients = Patient::count();
         $todayAppointments = Appointment::today()->count();
-        $waitingAppointments = Appointment::today()->waiting()->count();
+        // Not yet with the doctor: waiting for / at the nurse, or waiting for the doctor
+        $waitingAppointments = Appointment::today()->whereIn('status', ['waiting', 'screening', 'ready'])->count();
         $inProgressAppointments = Appointment::today()->where('status', 'in_progress')->count();
         $completedToday = Appointment::today()->where('status', 'completed')->count();
 

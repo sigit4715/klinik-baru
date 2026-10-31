@@ -43,6 +43,16 @@
                                         value="{{ old('specialization') }}" placeholder="Contoh: Umum, Gigi, Anak" required>
                                 </div>
                                 <div class="col-md-6 mb-3">
+                                    <label class="form-label">Poli</label>
+                                    <select name="poli_id" class="form-select">
+                                        <option value="">- Tidak ditentukan -</option>
+                                        @foreach($polis as $poli)
+                                            <option value="{{ $poli->id }}" @selected(old('poli_id') == $poli->id)>{{ $poli->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    <small class="text-muted">Dipakai perawat saat memilih poli lalu dokter.</small>
+                                </div>
+                                <div class="col-md-6 mb-3">
                                     <label class="form-label">Status</label>
                                     <select name="status" class="form-select">
                                         <option value="active">Aktif</option>

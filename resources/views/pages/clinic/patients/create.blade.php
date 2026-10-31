@@ -231,6 +231,9 @@
 
         <form action="{{ route('clinic.patients.store', app()->getLocale()) }}" method="POST">
             @csrf
+            @if(old('from', request('from')) === 'registration')
+                <input type="hidden" name="from" value="registration">
+            @endif
 
             <!-- Data Pribadi -->
             <div class="form-card">

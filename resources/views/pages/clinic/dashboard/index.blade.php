@@ -235,22 +235,11 @@
                                                     </div>
                                                 </td>
                                                 <td>
-                                                    <div class="userDatatable-content">{{ $queue->doctor->name }}</div>
+                                                    <div class="userDatatable-content">{{ $queue->doctor?->name ?? '-' }}</div>
                                                 </td>
                                                 <td>
-                                                    @if($queue->status == 'waiting')
-                                                        <span
-                                                            class="order-bg-opacity-warning text-warning rounded-pill px-15 py-1 fw-500">Menunggu</span>
-                                                    @elseif($queue->status == 'in_progress')
-                                                        <span
-                                                            class="order-bg-opacity-info text-info rounded-pill px-15 py-1 fw-500">Diperiksa</span>
-                                                    @elseif($queue->status == 'completed')
-                                                        <span
-                                                            class="order-bg-opacity-success text-success rounded-pill px-15 py-1 fw-500">Selesai</span>
-                                                    @else
-                                                        <span
-                                                            class="order-bg-opacity-secondary text-secondary rounded-pill px-15 py-1 fw-500">{{ $queue->status }}</span>
-                                                    @endif
+                                                    <span
+                                                        class="order-bg-opacity-{{ $queue->statusBadge() }} text-{{ $queue->statusBadge() }} rounded-pill px-15 py-1 fw-500">{{ $queue->statusLabel() }}</span>
                                                 </td>
                                                 <td>
                                                     @can('appointments.view')

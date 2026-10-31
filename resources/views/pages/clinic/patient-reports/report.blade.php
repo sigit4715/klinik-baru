@@ -337,7 +337,7 @@
                                                 -
                                             @endif
                                         </td>
-                                        <td>{{ $record->doctor->name ?? '-' }}</td>
+                                        <td>{{ $record->doctor?->name ?? '-' }}</td>
                                         <td>{{ Str::limit(($record->diagnosis ?? '') . ' ' . ($record->treatment ?? ''), 60) }}</td>
                                     </tr>
                                 @endforeach

@@ -15,6 +15,7 @@ class Doctor extends Model
         'sip_number',
         'name',
         'specialization',
+        'poli_id',
         'phone',
         'email',
         'address',
@@ -26,6 +27,17 @@ class Doctor extends Model
     protected $casts = [
         'schedule' => 'array',
     ];
+
+    public function poli()
+    {
+        return $this->belongsTo(Poli::class)->withTrashed();
+    }
+
+    /** Login account linked to this doctor (users.doctor_id) */
+    public function user()
+    {
+        return $this->hasOne(User::class);
+    }
 
     public function appointments()
     {

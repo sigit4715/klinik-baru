@@ -31,7 +31,13 @@ class MedicalRecord extends Model
     protected $casts = [
         'prescriptions' => 'array',
         'services_used' => 'array',
+        'edited_at' => 'datetime',
     ];
+
+    public function editor()
+    {
+        return $this->belongsTo(User::class, 'edited_by');
+    }
 
     // withTrashed: history stays readable after a patient, doctor or visit is archived
     public function appointment()

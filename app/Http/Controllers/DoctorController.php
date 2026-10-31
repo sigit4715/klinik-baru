@@ -4,7 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Validator;
+use App\Models\Appointment;
 use App\Models\Doctor;
+use App\Models\Poli;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Storage;
 
 class DoctorController extends Controller
@@ -23,7 +26,8 @@ class DoctorController extends Controller
     {
         $title = "Tambah Dokter Baru";
         $description = "Form pendaftaran dokter baru";
-        return view('pages.clinic.doctors.create', compact('title', 'description'));
+        $polis = Poli::active()->where('type', 'umum')->orderBy('name')->get();
+        return view('pages.clinic.doctors.create', compact('title', 'description', 'polis'));
     }
 
     public function store(Request $request)
@@ -32,6 +36,7 @@ class DoctorController extends Controller
             'sip_number' => 'required|string|unique:doctors',
             'name' => 'required|string|max:255',
             'specialization' => 'required|string|max:100',
+            'poli_id' => ['nullable', 'integer', Rule::exists('polis', 'id')->whereNull('deleted_at')],
             'phone' => 'required|string|max:20',
             'email' => 'required|email|unique:doctors',
             // Images only; blocks uploading scripts (e.g. .php) into public storage
@@ -53,6 +58,7 @@ class DoctorController extends Controller
         $doctor->sip_number = $request->sip_number;
         $doctor->name = $request->name;
         $doctor->specialization = $request->specialization;
+        $doctor->poli_id = $request->poli_id ?: null;
         $doctor->phone = $request->phone;
         $doctor->email = $request->email;
         $doctor->address = $request->address;
@@ -88,7 +94,9 @@ class DoctorController extends Controller
         $title = "Edit Dokter";
         $description = "Ubah data dokter";
 
-        return view('pages.clinic.doctors.edit', compact('title', 'description', 'doctor'));
+        $polis = Poli::where('type', 'umum')->orderBy('name')->get();
+
+        return view('pages.clinic.doctors.edit', compact('title', 'description', 'doctor', 'polis'));
     }
 
     public function update(Request $request, $language, $id)
@@ -97,6 +105,7 @@ class DoctorController extends Controller
             'sip_number' => 'required|string|unique:doctors,sip_number,' . $id,
             'name' => 'required|string|max:255',
             'specialization' => 'required|string|max:100',
+            'poli_id' => ['nullable', 'integer', Rule::exists('polis', 'id')->whereNull('deleted_at')],
             'phone' => 'required|string|max:20',
             'email' => 'required|email|unique:doctors,email,' . $id,
             // Images only; blocks uploading scripts (e.g. .php) into public storage
@@ -118,6 +127,7 @@ class DoctorController extends Controller
         $doctor->sip_number = $request->sip_number;
         $doctor->name = $request->name;
         $doctor->specialization = $request->specialization;
+        $doctor->poli_id = $request->poli_id ?: null;
         $doctor->phone = $request->phone;
         $doctor->email = $request->email;
         $doctor->address = $request->address;
@@ -145,7 +155,7 @@ class DoctorController extends Controller
     {
         $doctor = Doctor::findOrFail($id);
 
-        if ($doctor->appointments()->whereIn('status', ['waiting', 'in_progress'])->exists()) {
+        if ($doctor->appointments()->whereIn('status', Appointment::OPEN_STATUSES)->exists()) {
             return redirect()->route('clinic.doctors.index', app()->getLocale())
                 ->with('error', "Dokter {$doctor->name} masih memiliki antrian yang belum selesai.");
         }

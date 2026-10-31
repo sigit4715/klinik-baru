@@ -64,6 +64,18 @@
             </li>
         @endcanany
 
+        @can('nursing.manage')
+            <li class="menu-title mt-30">
+                <span>Perawat</span>
+            </li>
+            <li>
+                <a href="{{ route('clinic.nursing.index', $locale) }}" class="{{ $is('nursing*') ? 'active' : '' }}">
+                    <span class="nav-icon uil uil-heart-medical"></span>
+                    <span class="menu-text">Pemeriksaan Perawat</span>
+                </a>
+            </li>
+        @endcan
+
         @canany(['medical_records.view', 'medical_records.manage', 'doctors.view'])
             <li class="menu-title mt-30">
                 <span>Tindakan Dokter</span>
@@ -71,7 +83,7 @@
         @endcanany
         @can('medical_records.manage')
             <li>
-                <a href="{{ route('clinic.appointments.today', $locale) }}">
+                <a href="{{ route('clinic.medical-records.queue', $locale) }}" class="{{ $is('medical-records/queue') ? 'active' : '' }}">
                     <span class="nav-icon uil uil-stethoscope"></span>
                     <span class="menu-text">Pasien Menunggu</span>
                 </a>
@@ -181,11 +193,19 @@
             </li>
         @endcan
 
-        @canany(['services.view', 'medicines.view', 'medicines.manage'])
+        @canany(['services.view', 'medicines.view', 'medicines.manage', 'polis.manage'])
             <li class="menu-title mt-30">
                 <span>Master Data & Apotek</span>
             </li>
         @endcanany
+        @can('polis.manage')
+            <li>
+                <a href="{{ route('clinic.polis.index', $locale) }}" class="{{ $is('polis*') ? 'active' : '' }}">
+                    <span class="nav-icon uil uil-hospital"></span>
+                    <span class="menu-text">Poli</span>
+                </a>
+            </li>
+        @endcan
         @can('services.view')
             <li>
                 <a href="{{ route('clinic.services.index', $locale) }}" class="{{ $is('services*') ? 'active' : '' }}">

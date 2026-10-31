@@ -215,7 +215,7 @@
         </div>
         <div class="info-row">
             <span class="label">Kasir</span>
-            <span class="value">{{ Auth::user()->name ?? 'Admin' }}</span>
+            <span class="value">{{ $payment->cashier?->name ?? '-' }}</span>
         </div>
     </div>
 
@@ -232,7 +232,7 @@
         </div>
         <div class="info-row">
             <span class="label">Dokter</span>
-            <span class="value">{{ $payment->appointment->doctor->name }}</span>
+            <span class="value">{{ $payment->appointment->doctor?->name ?? '-' }}</span>
         </div>
     </div>
 

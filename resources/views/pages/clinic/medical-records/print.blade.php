@@ -87,7 +87,7 @@
         <h3>Hasil Pemeriksaan</h3>
         <div class="info-row"><span class="info-label">Tanggal:</span> {{ $record->created_at->format('d M Y H:i') }}
         </div>
-        <div class="info-row"><span class="info-label">Dokter:</span> {{ $record->doctor->name }}</div>
+        <div class="info-row"><span class="info-label">Dokter:</span> {{ $record->doctor?->name ?? '-' }}</div>
         <div class="info-row"><span class="info-label">Anamnesa:</span> {{ $record->anamnesa ?? '-' }}</div>
         <div class="info-row"><span class="info-label">Diagnosis:</span> {{ $record->diagnosis }}</div>
         <div class="info-row"><span class="info-label">Tindakan:</span> {{ $record->treatment ?? '-' }}</div>
@@ -124,8 +124,8 @@
     <div class="section" style="margin-top: 50px; text-align: right;">
         <p>Dokter Pemeriksa,</p>
         <br><br><br>
-        <p><strong>{{ $record->doctor->name }}</strong></p>
-        <p>SIP: {{ $record->doctor->sip_number }}</p>
+        <p><strong>{{ $record->doctor?->name ?? '-' }}</strong></p>
+        <p>SIP: {{ $record->doctor?->sip_number ?? '-' }}</p>
     </div>
 </body>
 

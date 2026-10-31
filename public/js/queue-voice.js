@@ -75,7 +75,10 @@ const QueueVoice = {
         // Buat teks panggilan
         let text = `Nomor antrian ${this.formatQueueNumber(queueNumber)}, atas nama ${patientName}`;
 
-        if (doctorName) {
+        if (room) {
+            // e.g. "Ruang Perawat" or "Poli Umum - dr. Siti"
+            text += `, silakan menuju ${room.replace(/ - /g, ', ')}`;
+        } else if (doctorName) {
             text += `, silakan menuju ruangan ${doctorName}`;
         } else {
             text += `, silakan ke meja pendaftaran`;
@@ -176,6 +179,8 @@ const QueueVoice = {
             const modalPatient = callModal.querySelector('.modal-patient-name');
             if (modalQueue) modalQueue.textContent = queueNumber;
             if (modalPatient && this.lastCall) modalPatient.textContent = this.lastCall.patientName;
+            const modalDestination = callModal.querySelector('.modal-doctor-name');
+            if (modalDestination && this.lastCall) modalDestination.textContent = this.lastCall.room || this.lastCall.doctorName || '';
 
             const bsModal = new bootstrap.Modal(callModal);
             bsModal.show();
@@ -194,7 +199,11 @@ const QueueVoice = {
     /**
      * Panggil antrian berikutnya via API
      */
-    callNext: async function (url, csrfToken, doctorId = null) {
+    callNext: async function (url, csrfToken, body = {}) {
+        // Older callers passed a doctor id instead of a body object
+        if (body === null || typeof body !== 'object') {
+            body = body ? { doctor_id: body } : {};
+        }
         try {
             const response = await fetch(url, {
                 method: 'POST',
@@ -203,8 +212,8 @@ const QueueVoice = {
                     'X-CSRF-TOKEN': csrfToken,
                     'Accept': 'application/json'
                 },
-                // Optional: only call the next patient of one doctor
-                body: JSON.stringify(doctorId ? { doctor_id: doctorId } : {})
+                // stage: nurse|doctor, optional doctor_id / nurse_id filter
+                body: JSON.stringify(body)
             });
 
             const data = await response.json();
@@ -214,7 +223,8 @@ const QueueVoice = {
                 this.speak(
                     apt.queue_number,
                     apt.patient?.name || 'Pasien',
-                    apt.doctor?.name || ''
+                    apt.doctor?.name || '',
+                    apt.destination || ''
                 );
 
                 // Reload halaman setelah beberapa saat untuk update status
@@ -235,7 +245,7 @@ const QueueVoice = {
     /**
      * Panggil antrian spesifik via API  
      */
-    callSpecific: async function (url, id, csrfToken) {
+    callSpecific: async function (url, id, csrfToken, body = {}) {
         try {
             const response = await fetch(url.replace('__ID__', id), {
                 method: 'POST',
@@ -243,7 +253,8 @@ const QueueVoice = {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': csrfToken,
                     'Accept': 'application/json'
-                }
+                },
+                body: JSON.stringify(body || {})
             });
 
             const data = await response.json();
@@ -253,7 +264,8 @@ const QueueVoice = {
                 this.speak(
                     apt.queue_number,
                     apt.patient?.name || 'Pasien',
-                    apt.doctor?.name || ''
+                    apt.doctor?.name || '',
+                    apt.destination || ''
                 );
 
                 // Reload halaman setelah beberapa saat untuk update status

@@ -15,6 +15,8 @@ class Appointment extends Model
         'queue_number',
         'patient_id',
         'doctor_id',
+        'poli_id',
+        'nurse_id',
         'appointment_date',
         'appointment_time',
         'complaint',
@@ -24,7 +26,30 @@ class Appointment extends Model
     protected $casts = [
         'appointment_date' => 'date',
         'appointment_time' => 'datetime:H:i',
+        'called_at' => 'datetime',
     ];
+
+    public function poli()
+    {
+        return $this->belongsTo(Poli::class)->withTrashed();
+    }
+
+    /** Nurse chosen at registration */
+    public function nurse()
+    {
+        return $this->belongsTo(User::class, 'nurse_id');
+    }
+
+    /** Front-desk user who registered the visit */
+    public function registeredBy()
+    {
+        return $this->belongsTo(User::class, 'registered_by');
+    }
+
+    public function nursingAssessment()
+    {
+        return $this->hasOne(NursingAssessment::class);
+    }
 
     // withTrashed: visits of archived patients/doctors must still show who they were
     public function patient()
@@ -61,14 +86,42 @@ class Appointment extends Model
         return ! $this->payment || in_array($this->payment->status, ['cancelled', 'refunded'], true);
     }
 
-    public const STATUSES = ['waiting', 'in_progress', 'completed', 'cancelled'];
+    /**
+     * waiting (menunggu perawat) -> screening (di perawat) -> ready (menunggu dokter)
+     * -> in_progress (diperiksa dokter) -> completed. cancelled from any open step.
+     */
+    public const STATUSES = ['waiting', 'screening', 'ready', 'in_progress', 'completed', 'cancelled'];
+
+    /** Visit is still open: not finished by the doctor and not cancelled */
+    public const OPEN_STATUSES = ['waiting', 'screening', 'ready', 'in_progress'];
+
+    public const STATUS_LABELS = [
+        'waiting' => 'Menunggu Perawat',
+        'screening' => 'Di Perawat',
+        'ready' => 'Menunggu Dokter',
+        'in_progress' => 'Diperiksa Dokter',
+        'completed' => 'Selesai',
+        'cancelled' => 'Dibatalkan',
+    ];
+
+    public const STATUS_BADGES = [
+        'waiting' => 'warning',
+        'screening' => 'primary',
+        'ready' => 'secondary',
+        'in_progress' => 'info',
+        'completed' => 'success',
+        'cancelled' => 'danger',
+    ];
 
     /**
      * Allowed status changes. Completed visits are final; cancelled ones can be reopened.
+     * waiting -> in_progress stays allowed so a clinic can skip the nurse step.
      */
     private const TRANSITIONS = [
-        'waiting' => ['in_progress', 'cancelled'],
-        'in_progress' => ['waiting', 'completed', 'cancelled'],
+        'waiting' => ['screening', 'ready', 'in_progress', 'cancelled'],
+        'screening' => ['waiting', 'ready', 'in_progress', 'cancelled'],
+        'ready' => ['screening', 'in_progress', 'cancelled'],
+        'in_progress' => ['waiting', 'ready', 'completed', 'cancelled'],
         'completed' => [],
         'cancelled' => ['waiting'],
     ];
@@ -76,6 +129,40 @@ class Appointment extends Model
     public function canTransitionTo(string $status): bool
     {
         return in_array($status, self::TRANSITIONS[$this->status] ?? [], true);
+    }
+
+    public function statusLabel(): string
+    {
+        return self::STATUS_LABELS[$this->status] ?? ucfirst((string) $this->status);
+    }
+
+    public function statusBadge(): string
+    {
+        return self::STATUS_BADGES[$this->status] ?? 'secondary';
+    }
+
+    /** Patient is at, or waiting for, the nurse */
+    public function isAtNurseStage(): bool
+    {
+        return in_array($this->status, ['waiting', 'screening'], true);
+    }
+
+    /** Where the patient should go when called, used by the TV display and voice call */
+    public function destinationLabel(): string
+    {
+        if ($this->isAtNurseStage()) {
+            return 'Ruang Perawat';
+        }
+
+        $parts = array_filter([$this->poli?->name, $this->doctor?->name]);
+
+        return $parts ? implode(' - ', $parts) : 'Ruang Pemeriksaan';
+    }
+
+    /** Complaint from the nurse step, falling back to the one typed at registration (old visits) */
+    public function complaintText(): ?string
+    {
+        return $this->nursingAssessment?->chief_complaint ?: $this->complaint;
     }
 
     /**

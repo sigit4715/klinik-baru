@@ -92,19 +92,11 @@
                         <i class="uil uil-clock me-1"></i>
                         {{ $days[$ad->dayOfWeek] }}, {{ $ad->day }} {{ $months[$ad->month] }} {{ $ad->year }}
                         @if($appointment->appointment_time)
-                            - {{ $appointment->appointment_time }}
+                            - {{ $appointment->appointment_time->format('H:i') }}
                         @endif
                     </p>
                     <div class="mt-2">
-                        @if($appointment->status == 'waiting')
-                            <span class="badge bg-warning fs-6">Menunggu</span>
-                        @elseif($appointment->status == 'in_progress')
-                            <span class="badge bg-info fs-6">Sedang Diperiksa</span>
-                        @elseif($appointment->status == 'completed')
-                            <span class="badge bg-light text-success fs-6">✓ Selesai</span>
-                        @else
-                            <span class="badge bg-secondary fs-6">{{ $appointment->status }}</span>
-                        @endif
+                        <span class="badge bg-{{ $appointment->statusBadge() }} fs-6">{{ $appointment->statusLabel() }}</span>
                     </div>
                 </div>
                 <div class="col-md-3 text-end">
@@ -198,10 +190,18 @@
 
                 <!-- Doctor Info -->
                 <div class="info-card">
-                    <h6><i class="uil uil-stethoscope me-1"></i>Dokter</h6>
-                    <h5 class="mb-1">{{ $appointment->doctor->name }}</h5>
-                    <p class="text-muted mb-0">{{ $appointment->doctor->specialization }}</p>
+                    <h6><i class="uil uil-stethoscope me-1"></i>Poli & Dokter</h6>
+                    <h5 class="mb-1">{{ $appointment->doctor?->name ?? '-' }}</h5>
+                    <p class="text-muted mb-2">{{ $appointment->poli?->name ?? 'Poli belum ditentukan' }} | {{ $appointment->doctor?->specialization ?? '-' }}</p>
+                    <table class="table table-sm table-borderless mb-0 small">
+                        <tr><td class="text-muted ps-0" width="40%">Perawat</td><td>{{ $appointment->nurse?->name ?? '-' }}</td></tr>
+                        <tr><td class="text-muted ps-0">Petugas Pendaftaran</td><td>{{ $appointment->registeredBy?->name ?? '-' }}</td></tr>
+                    </table>
                 </div>
+
+                @if($appointment->nursingAssessment)
+                    @include('pages.clinic.medical-records._nurse_card', ['assessment' => $appointment->nursingAssessment])
+                @endif
 
                 <!-- Complaint -->
                 <div class="info-card">
@@ -214,7 +214,13 @@
             <div class="col-lg-7">
                 <!-- Action Buttons -->
                 <div class="d-flex flex-wrap gap-2 mb-3">
-                    @if(in_array($appointment->status, ['waiting', 'in_progress']) && !$appointment->medicalRecord)
+                    @if($appointment->isAtNurseStage() && $appointment->appointment_date->isToday())
+                        @can('nursing.manage')
+                            <a href="{{ route('clinic.nursing.edit', [app()->getLocale(), $appointment->id]) }}"
+                                class="btn btn-primary"><i class="uil uil-heart-medical me-1"></i>Pemeriksaan Perawat</a>
+                        @endcan
+                    @endif
+                    @if(in_array($appointment->status, ['ready', 'in_progress']) && !$appointment->medicalRecord)
                         @can('medical_records.manage')
                             <a href="{{ route('clinic.medical-records.create', [app()->getLocale(), $appointment->id]) }}"
                                 class="btn btn-success"><i class="uil uil-stethoscope me-1"></i>Mulai Periksa</a>
@@ -433,7 +439,7 @@
                                             <small class="text-muted">{{ $days[$hd->dayOfWeek] }}, {{ $hd->day }}
                                                 {{ $months[$hd->month] }} {{ $hd->year }}</small>
                                             <p class="mb-0 fw-bold">{{ Str::limit($history->diagnosis, 50) }}</p>
-                                            <small class="text-muted">{{ $history->doctor->name ?? '-' }}</small>
+                                            <small class="text-muted">{{ $history->doctor?->name ?? '-' }}</small>
                                         </div>
                                         <i class="uil uil-angle-right text-muted"></i>
                                     </div>

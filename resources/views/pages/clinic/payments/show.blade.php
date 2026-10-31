@@ -255,6 +255,10 @@
                     <label>Metode Pembayaran</label>
                     <div class="value">{{ strtoupper($payment->payment_method) }}</div>
                 </div>
+                <div class="info-item">
+                    <label>Kasir</label>
+                    <div class="value">{{ $payment->cashier?->name ?? '-' }}</div>
+                </div>
             </div>
         </div>
 

@@ -57,6 +57,8 @@
                                 @enderror
                             </div>
 
+                            @include('pages.clinic.users._doctor_link', ['user' => null])
+
                             <div class="mb-3">
                                 <label class="form-label">Password <span class="text-danger">*</span></label>
                                 <input type="password" name="password"

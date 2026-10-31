@@ -6,6 +6,7 @@ use App\Models\Appointment;
 use App\Models\Doctor;
 use App\Models\Medicine;
 use App\Models\Patient;
+use App\Models\Poli;
 use App\Models\Service;
 use Illuminate\Http\Request;
 
@@ -21,6 +22,7 @@ class ArchiveController extends Controller
         'medicines' => ['model' => Medicine::class, 'label' => 'Obat'],
         'services' => ['model' => Service::class, 'label' => 'Layanan'],
         'appointments' => ['model' => Appointment::class, 'label' => 'Antrian'],
+        'polis' => ['model' => Poli::class, 'label' => 'Poli'],
     ];
 
     public function index(Request $request)
@@ -39,7 +41,7 @@ class ArchiveController extends Controller
                 match ($type) {
                     'patients' => $q->where('name', 'like', "%{$search}%")->orWhere('no_rm', 'like', "%{$search}%")->orWhere('nik', 'like', "%{$search}%"),
                     'doctors' => $q->where('name', 'like', "%{$search}%")->orWhere('sip_number', 'like', "%{$search}%"),
-                    'medicines', 'services' => $q->where('name', 'like', "%{$search}%")->orWhere('code', 'like', "%{$search}%"),
+                    'medicines', 'services', 'polis' => $q->where('name', 'like', "%{$search}%")->orWhere('code', 'like', "%{$search}%"),
                     'appointments' => $q->where('queue_number', 'like', "%{$search}%"),
                 };
             });

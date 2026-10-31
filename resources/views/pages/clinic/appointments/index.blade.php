@@ -45,29 +45,25 @@
                                     <td><a
                                             href="{{ route('clinic.patients.show', [app()->getLocale(), $apt->patient->id]) }}">{{ $apt->patient->name }}</a>
                                     </td>
-                                    <td>{{ $apt->doctor->name }}</td>
+                                    <td>{{ $apt->doctor?->name ?? '-' }}</td>
                                     <td>{{ Str::limit($apt->complaint, 30) }}</td>
-                                    <td>
-                                        @if($apt->status == 'waiting')
-                                            <span class="badge bg-warning">Menunggu</span>
-                                        @elseif($apt->status == 'in_progress')
-                                            <span class="badge bg-info">Sedang Diperiksa</span>
-                                        @elseif($apt->status == 'completed')
-                                            <span class="badge bg-success">Selesai</span>
-                                        @else
-                                            <span class="badge bg-secondary">{{ $apt->status }}</span>
-                                        @endif
-                                    </td>
+                                    <td><span class="badge bg-{{ $apt->statusBadge() }}">{{ $apt->statusLabel() }}</span></td>
                                     <td>
                                         <a href="{{ route('clinic.appointments.show', [app()->getLocale(), $apt->id]) }}"
                                             class="btn btn-sm btn-outline-info"><i class="uil uil-eye"></i></a>
-                                        @if($apt->status == 'waiting')
+                                        @if($apt->isAtNurseStage())
                                             @can('appointments.manage')
                                                 <a href="{{ route('clinic.appointments.edit', [app()->getLocale(), $apt->id]) }}"
                                                     class="btn btn-sm btn-outline-primary"><i class="uil uil-edit"></i></a>
                                             @endcan
+                                            @if($apt->appointment_date->isToday())
+                                                @can('nursing.manage')
+                                                    <a href="{{ route('clinic.nursing.edit', [app()->getLocale(), $apt->id]) }}"
+                                                        class="btn btn-sm btn-outline-primary" title="Pemeriksaan Perawat"><i class="uil uil-heart-medical"></i></a>
+                                                @endcan
+                                            @endif
                                         @endif
-                                        @if(in_array($apt->status, ['waiting', 'in_progress']) && !$apt->medicalRecord)
+                                        @if(in_array($apt->status, ['ready', 'in_progress']) && !$apt->medicalRecord)
                                             @can('medical_records.manage')
                                                 <a href="{{ route('clinic.medical-records.create', [app()->getLocale(), $apt->id]) }}"
                                                     class="btn btn-sm btn-outline-success" title="Periksa"><i class="uil uil-file-medical"></i></a>

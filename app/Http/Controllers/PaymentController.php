@@ -180,6 +180,8 @@ class PaymentController extends Controller
                 $payment->payment_method = $request->payment_method;
                 $payment->status = 'paid';
                 $payment->items = $items;
+                // Cashier who received the money (payroll/attendance and the receipt)
+                $payment->cashier_id = auth()->id();
                 $payment->saveWithUniqueInvoiceNumber();
 
                 return $payment;
@@ -203,7 +205,7 @@ class PaymentController extends Controller
 
     public function invoice($language, $id)
     {
-        $payment = Payment::with(['patient', 'appointment.patient', 'appointment.doctor'])->findOrFail($id);
+        $payment = Payment::with(['patient', 'cashier', 'appointment.patient', 'appointment.doctor'])->findOrFail($id);
         $clinicSettings = ClinicSetting::getAllSettings();
         return view('pages.clinic.payments.invoice', compact('payment', 'clinicSettings'));
     }
@@ -388,7 +390,7 @@ class PaymentController extends Controller
 
     public function receipt($language, $id)
     {
-        $payment = Payment::with(['patient', 'appointment.patient', 'appointment.doctor'])
+        $payment = Payment::with(['patient', 'cashier', 'appointment.patient', 'appointment.doctor'])
             ->findOrFail($id);
 
         $clinicSettings = ClinicSetting::getAllSettings();

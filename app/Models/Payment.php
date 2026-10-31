@@ -61,6 +61,12 @@ class Payment extends Model
         return $this->belongsTo(Patient::class)->withTrashed();
     }
 
+    /** Cashier who received the payment (null for payments made before this was recorded) */
+    public function cashier()
+    {
+        return $this->belongsTo(User::class, 'cashier_id');
+    }
+
     public function refunds()
     {
         return $this->hasMany(PaymentRefund::class)->latest();

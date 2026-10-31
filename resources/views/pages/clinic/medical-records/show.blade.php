@@ -64,18 +64,36 @@
                         </table>
                     </div>
                 </div>
+                @if($record->appointment?->nursingAssessment)
+                    <div class="mt-3">
+                        @include('pages.clinic.medical-records._nurse_card', ['assessment' => $record->appointment->nursingAssessment, 'appointment' => $record->appointment])
+                    </div>
+                @endif
             </div>
             <div class="col-lg-8">
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <span><i class="uil uil-file-medical me-2"></i>Detail Rekam Medis</span>
-                        <a href="{{ route('clinic.medical-records.print', [app()->getLocale(), $record->id]) }}"
-                            class="btn btn-sm btn-outline-secondary" target="_blank"><i
-                                class="uil uil-print me-1"></i>Cetak</a>
+                        <div class="d-flex gap-1">
+                            @can('medical_records.edit')
+                                <a href="{{ route('clinic.medical-records.edit', [app()->getLocale(), $record->id]) }}"
+                                    class="btn btn-sm btn-outline-primary"><i class="uil uil-edit me-1"></i>Edit</a>
+                            @endcan
+                            <a href="{{ route('clinic.medical-records.print', [app()->getLocale(), $record->id]) }}"
+                                class="btn btn-sm btn-outline-secondary" target="_blank"><i
+                                    class="uil uil-print me-1"></i>Cetak</a>
+                        </div>
                     </div>
                     <div class="card-body">
+                        @if(session('success'))
+                            <div class="alert alert-success alert-dismissible fade show">{{ session('success') }}<button type="button"
+                                    class="btn-close" data-bs-dismiss="alert"></button></div>
+                        @endif
                         <p><strong>Tanggal:</strong> {{ $record->created_at->format('d M Y H:i') }}</p>
-                        <p><strong>Dokter:</strong> {{ $record->doctor->name }} ({{ $record->doctor->specialization }})</p>
+                        <p><strong>Dokter:</strong> {{ $record->doctor?->name ?? '-' }} ({{ $record->doctor?->specialization ?? '-' }})</p>
+                        @if($record->edited_at)
+                            <p class="text-muted small"><i class="uil uil-edit me-1"></i>Diedit oleh {{ $record->editor?->name ?? '-' }} pada {{ $record->edited_at->format('d/m/Y H:i') }}</p>
+                        @endif
                         <hr>
                         <p><strong>Anamnesa:</strong><br>{{ $record->anamnesa ?? '-' }}</p>
                         <p><strong>Diagnosis:</strong><br>{{ $record->diagnosis }}</p>
@@ -208,7 +226,7 @@
                                                     @php $hd = $history->created_at; @endphp
                                                     {{ $days[$hd->dayOfWeek] }}, {{ $hd->day }} {{ $months[$hd->month] }} {{ $hd->year }}
                                                 </td>
-                                                <td>{{ $history->doctor->name ?? '-' }}</td>
+                                                <td>{{ $history->doctor?->name ?? '-' }}</td>
                                                 <td>{{ Str::limit($history->diagnosis, 40) }}</td>
                                                 <td>{{ Str::limit($history->treatment ?? '-', 30) }}</td>
                                             </tr>

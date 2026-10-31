@@ -63,7 +63,7 @@
                             <a href="{{ route('clinic.medical-records.show', [app()->getLocale(), $record->id]) }}"
                                 class="btn btn-sm btn-outline-info">Detail</a>
                         </div>
-                        <p class="text-muted small mb-2">Dr. {{ $record->doctor->name }}</p>
+                        <p class="text-muted small mb-2">Dr. {{ $record->doctor?->name ?? '-' }}</p>
                         <p class="mb-1"><strong>Diagnosis:</strong> {{ $record->diagnosis }}</p>
                         <p class="mb-0"><strong>Tindakan:</strong> {{ $record->treatment ?? '-' }}</p>
                     </div>

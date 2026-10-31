@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Doctor;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -25,7 +26,9 @@ class UserManagementController extends Controller
         $description = 'Form tambah user login';
         $roles = $this->assignableRoles();
 
-        return view('pages.clinic.users.create', compact('title', 'description', 'roles'));
+        $doctors = Doctor::orderBy('name')->get();
+
+        return view('pages.clinic.users.create', compact('title', 'description', 'roles', 'doctors'));
     }
 
     public function store(Request $request)
@@ -33,11 +36,13 @@ class UserManagementController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:users,email',
+            'doctor_id' => ['nullable', 'integer', Rule::exists('doctors', 'id')->whereNull('deleted_at'), Rule::unique('users', 'doctor_id')],
             'password' => 'required|string|min:8|confirmed',
             'role' => ['required', Rule::in($this->assignableRoles()->keys())],
             'is_active' => 'boolean',
         ], [
             'role.in' => 'Role tidak valid atau Anda tidak boleh memberikan role tersebut.',
+            'doctor_id.unique' => 'Data dokter ini sudah terhubung ke user lain.',
         ]);
 
         $user = new User([
@@ -47,6 +52,7 @@ class UserManagementController extends Controller
         ]);
         $user->role = $validated['role'];
         $user->is_active = $request->boolean('is_active');
+        $user->doctor_id = $validated['doctor_id'] ?? null;
         $user->save();
 
         return redirect()->route('clinic.users.index', app()->getLocale())
@@ -61,7 +67,9 @@ class UserManagementController extends Controller
         $this->authorizeTarget($user);
         $roles = $this->assignableRoles();
 
-        return view('pages.clinic.users.edit', compact('title', 'description', 'user', 'roles'));
+        $doctors = Doctor::orderBy('name')->get();
+
+        return view('pages.clinic.users.edit', compact('title', 'description', 'user', 'roles', 'doctors'));
     }
 
     public function update(Request $request, $language, $id)
@@ -72,11 +80,13 @@ class UserManagementController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => ['required', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'doctor_id' => ['nullable', 'integer', Rule::exists('doctors', 'id')->whereNull('deleted_at'), Rule::unique('users', 'doctor_id')->ignore($user->id)],
             'password' => 'nullable|string|min:8|confirmed',
             'role' => ['required', Rule::in($this->assignableRoles()->keys())],
             'is_active' => 'boolean',
         ], [
             'role.in' => 'Role tidak valid atau Anda tidak boleh memberikan role tersebut.',
+            'doctor_id.unique' => 'Data dokter ini sudah terhubung ke user lain.',
         ]);
 
         $isActive = $request->boolean('is_active');
@@ -96,6 +106,7 @@ class UserManagementController extends Controller
         }
         $user->role = $validated['role'];
         $user->is_active = $isActive;
+        $user->doctor_id = $validated['doctor_id'] ?? null;
         $user->save();
 
         return redirect()->route('clinic.users.index', app()->getLocale())
@@ -116,6 +127,12 @@ class UserManagementController extends Controller
         if ($this->wouldRemoveLastAdmin($user, null, false)) {
             return redirect()->route('clinic.users.index', app()->getLocale())
                 ->with('error', 'Harus ada minimal satu Administrator yang aktif.');
+        }
+
+        // Names on registrations, nurse checks and payments are kept for payroll/attendance history
+        if ($user->hasClinicActivity()) {
+            return redirect()->route('clinic.users.index', app()->getLocale())
+                ->with('error', "User {$user->name} sudah tercatat di data pendaftaran/pemeriksaan/pembayaran. Nonaktifkan saja (Edit → matikan User Aktif) supaya riwayatnya tetap ada.");
         }
 
         $user->delete();

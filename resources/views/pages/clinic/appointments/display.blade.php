@@ -488,8 +488,8 @@
                         {{ preg_replace('/^\d{8}-/', '', $current->queue_number) }}</div>
                     <div class="current-patient" id="currentPatient">{{ $current->patient->name }}</div>
                     <div class="current-doctor" id="currentDoctor">
-                        <i class="uil uil-user-md"></i>
-                        {{ $current->doctor->name ?? 'Dokter' }}
+                        <i class="uil uil-map-marker"></i>
+                        {{ $current->destinationLabel() }}
                     </div>
                 @else
                     <div class="no-queue">
@@ -512,7 +512,7 @@
                             <div class="waiting-num">{{ preg_replace('/^\d{8}-/', '', $apt->queue_number) }}</div>
                             <div class="waiting-info">
                                 <h3>{{ $apt->patient->name }}</h3>
-                                <p><i class="uil uil-user-md"></i> {{ $apt->doctor->name ?? '' }}</p>
+                                <p><i class="uil uil-map-marker"></i> {{ $apt->status === 'ready' ? $apt->destinationLabel() : 'Menunggu perawat' }}</p>
                             </div>
                         </div>
                     @empty
@@ -548,7 +548,8 @@
         setInterval(updateClock, 1000);
 
         // Track last queue
-        let lastQueueId = {{ $current ? $current->id : 'null' }};
+        // Changes on every call (also a repeated call), so the TV announces it again
+        let lastCallKey = @js($currentCallKey);
 
         // Check for updates
         function checkUpdates() {
@@ -563,8 +564,8 @@
                         // Check new call
                         if (data.in_progress && data.in_progress.length > 0) {
                             const current = data.in_progress[0];
-                            if (lastQueueId !== current.id) {
-                                lastQueueId = current.id;
+                            if (lastCallKey !== current.call_key) {
+                                lastCallKey = current.call_key;
                                 updateCurrentDisplay(current);
 
                                 // Add calling animation
@@ -576,7 +577,8 @@
                                 QueueVoice.speak(
                                     current.queue_number,
                                     current.patient?.name || 'Pasien',
-                                    current.doctor?.name || ''
+                                    current.doctor?.name || '',
+                                    current.destination || ''
                                 );
                             }
                         }
@@ -602,8 +604,8 @@
                 <div class="current-number" id="currentNumber">${queueNum}</div>
                 <div class="current-patient" id="currentPatient">${escapeHtml(queue.patient?.name || 'Pasien')}</div>
                 <div class="current-doctor" id="currentDoctor">
-                    <i class="uil uil-user-md"></i>
-                    ${escapeHtml(queue.doctor?.name || 'Dokter')}
+                    <i class="uil uil-map-marker"></i>
+                    ${escapeHtml(queue.destination || queue.doctor?.name || '')}
                 </div>
             `;
         }
@@ -627,7 +629,7 @@
                         <div class="waiting-num">${num}</div>
                         <div class="waiting-info">
                             <h3>${escapeHtml(apt.patient?.name || 'Pasien')}</h3>
-                            <p><i class="uil uil-user-md"></i> ${escapeHtml(apt.doctor?.name || '')}</p>
+                            <p><i class="uil uil-map-marker"></i> ${escapeHtml(apt.status === 'ready' ? apt.destination : 'Menunggu perawat')}</p>
                         </div>
                     </div>
                 `;

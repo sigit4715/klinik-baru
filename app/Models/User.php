@@ -77,4 +77,35 @@ class User extends Authenticatable
     {
         return $this->roleModel?->label ?? ucfirst((string) $this->role);
     }
+
+    /** Doctor profile linked to this login (doctor_id is set explicitly, not mass assigned) */
+    public function doctor()
+    {
+        return $this->belongsTo(Doctor::class)->withTrashed();
+    }
+
+    /**
+     * Active users whose (non-administrator) role has the permission,
+     * e.g. activeWithPermission('nursing.manage') lists the nurses for the registration form.
+     */
+    public static function activeWithPermission(string $permission)
+    {
+        $roleNames = Role::where('is_system', false)->get()
+            ->filter(fn (Role $role) => $role->hasPermission($permission))
+            ->pluck('name');
+
+        return static::whereIn('role', $roleNames)
+            ->where('is_active', true)
+            ->orderBy('name')
+            ->get();
+    }
+
+    /** Has this user's name been recorded on clinic work (needed for payroll/attendance history)? */
+    public function hasClinicActivity(): bool
+    {
+        return Appointment::withTrashed()->where('registered_by', $this->id)->orWhere('nurse_id', $this->id)->exists()
+            || NursingAssessment::where('nurse_id', $this->id)->exists()
+            || Payment::where('cashier_id', $this->id)->exists()
+            || MedicalRecord::where('edited_by', $this->id)->exists();
+    }
 }

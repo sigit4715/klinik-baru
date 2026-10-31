@@ -187,7 +187,7 @@
                                                 {{ $days[$ad->dayOfWeek] }}, {{ $ad->day }} {{ $months[$ad->month] }} {{ $ad->year }}
                                             </td>
                                             <td><code>{{ $appointment->queue_number }}</code></td>
-                                            <td>{{ $appointment->doctor->name }}</td>
+                                            <td>{{ $appointment->doctor?->name ?? '-' }}</td>
                                             <td>
                                                 @if($medicalRecord)
                                                     <strong>{{ Str::limit($medicalRecord->diagnosis, 25) }}</strong>
@@ -199,15 +199,7 @@
                                                 @endif
                                             </td>
                                             <td>
-                                                @if($appointment->status == 'completed')
-                                                    <span class="badge bg-success">Selesai</span>
-                                                @elseif($appointment->status == 'waiting')
-                                                    <span class="badge bg-warning">Menunggu</span>
-                                                @elseif($appointment->status == 'in_progress')
-                                                    <span class="badge bg-info">Diperiksa</span>
-                                                @else
-                                                    <span class="badge bg-secondary">{{ $appointment->status }}</span>
-                                                @endif
+                                                <span class="badge bg-{{ $appointment->statusBadge() }}">{{ $appointment->statusLabel() }}</span>
                                             </td>
                                             <td>
                                                 @if($medicalRecord)

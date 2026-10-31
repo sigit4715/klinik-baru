@@ -54,6 +54,9 @@
                                     @case('appointments')
                                         <th>No. Antrian</th><th>Pasien</th><th>Dokter</th>
                                         @break
+                                    @case('polis')
+                                        <th>Kode</th><th>Nama</th><th>Jenis</th>
+                                        @break
                                     @default
                                         <th>Kode</th><th>Nama</th><th>{{ $type === 'medicines' ? 'Stok' : 'Harga' }}</th>
                                 @endswitch
@@ -72,10 +75,13 @@
                                             <td>{{ $item->sip_number }}</td><td>{{ $item->name }}</td><td>{{ $item->specialization }}</td>
                                             @break
                                         @case('appointments')
-                                            <td><code>{{ $item->queue_number }}</code></td><td>{{ $item->patient?->name }}</td><td>{{ $item->doctor?->name }}</td>
+                                            <td><code>{{ $item->queue_number }}</code></td><td>{{ $item->patient?->name }}</td><td>{{ $item->doctor?->name ?? '-' }}</td>
                                             @break
                                         @case('medicines')
                                             <td><code>{{ $item->code }}</code></td><td>{{ $item->name }}</td><td>{{ $item->stock }} {{ $item->unit }}</td>
+                                            @break
+                                        @case('polis')
+                                            <td><code>{{ $item->code }}</code></td><td>{{ $item->name }}</td><td>{{ $item->typeLabel() }}</td>
                                             @break
                                         @default
                                             <td><code>{{ $item->code }}</code></td><td>{{ $item->name }}</td><td>Rp {{ number_format($item->price, 0, ',', '.') }}</td>

@@ -57,6 +57,8 @@
                                 @enderror
                             </div>
 
+                            @include('pages.clinic.users._doctor_link')
+
                             <div class="mb-3">
                                 <label class="form-label">Password Baru</label>
                                 <input type="password" name="password"

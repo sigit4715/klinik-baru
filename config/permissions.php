@@ -29,15 +29,21 @@ return [
         'queue.display' => 'Buka layar display antrian (TV)',
     ],
 
+    'Perawat' => [
+        'nursing.manage' => 'Pemeriksaan perawat: anamnesa, tanda vital, triage, poli & dokter tujuan',
+    ],
+
     'Pemeriksaan & Rekam Medis' => [
         'medical_records.view' => 'Lihat & cetak rekam medis',
         'medical_records.manage' => 'Isi pemeriksaan / buat rekam medis',
+        'medical_records.edit' => 'Edit rekam medis yang sudah disimpan',
     ],
 
-    'Dokter' => [
+    'Dokter & Poli' => [
         'doctors.view' => 'Lihat daftar dokter',
         'doctors.manage' => 'Tambah & edit dokter',
         'doctors.delete' => 'Hapus dokter',
+        'polis.manage' => 'Kelola master poli',
     ],
 
     'Kasir / Pembayaran' => [
