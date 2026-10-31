@@ -588,15 +588,22 @@
                 .catch(e => console.error('Error:', e));
         }
 
+        // Names come from user input; escape before putting them into innerHTML
+        function escapeHtml(value) {
+            return String(value ?? '').replace(/[&<>"']/g, c => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+            }[c]));
+        }
+
         function updateCurrentDisplay(queue) {
-            const queueNum = queue.queue_number.replace(/^\d{8}-/, '');
+            const queueNum = escapeHtml(queue.queue_number.replace(/^\d{8}-/, ''));
             document.getElementById('currentQueueCard').innerHTML = `
                 <div class="current-label">Nomor Antrian Saat Ini</div>
                 <div class="current-number" id="currentNumber">${queueNum}</div>
-                <div class="current-patient" id="currentPatient">${queue.patient?.name || 'Pasien'}</div>
+                <div class="current-patient" id="currentPatient">${escapeHtml(queue.patient?.name || 'Pasien')}</div>
                 <div class="current-doctor" id="currentDoctor">
                     <i class="uil uil-user-md"></i>
-                    ${queue.doctor?.name || 'Dokter'}
+                    ${escapeHtml(queue.doctor?.name || 'Dokter')}
                 </div>
             `;
         }
@@ -614,13 +621,13 @@
             }
 
             list.innerHTML = waiting.slice(0, 8).map((apt, i) => {
-                const num = apt.queue_number.replace(/^\d{8}-/, '');
+                const num = escapeHtml(apt.queue_number.replace(/^\d{8}-/, ''));
                 return `
                     <div class="waiting-item animate-in" style="animation-delay: ${i * 0.1}s">
                         <div class="waiting-num">${num}</div>
                         <div class="waiting-info">
-                            <h3>${apt.patient?.name || 'Pasien'}</h3>
-                            <p><i class="uil uil-user-md"></i> ${apt.doctor?.name || ''}</p>
+                            <h3>${escapeHtml(apt.patient?.name || 'Pasien')}</h3>
+                            <p><i class="uil uil-user-md"></i> ${escapeHtml(apt.doctor?.name || '')}</p>
                         </div>
                     </div>
                 `;

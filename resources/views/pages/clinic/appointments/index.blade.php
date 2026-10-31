@@ -7,8 +7,10 @@
             <div class="d-flex flex-wrap justify-content-center breadcrumb-main__wrapper">
                 <h4 class="text-capitalize fw-500 breadcrumb-title">{{ $title }}</h4>
                 <div class="action-btn mt-sm-0 mt-15 ms-3">
-                    <a href="{{ route('clinic.appointments.create', app()->getLocale()) }}" class="btn px-20 btn-primary"><i
-                            class="las la-plus fs-16"></i>Buat Antrian</a>
+                    @can('appointments.manage')
+                        <a href="{{ route('clinic.appointments.create', app()->getLocale()) }}" class="btn px-20 btn-primary"><i
+                                class="las la-plus fs-16"></i>Buat Antrian</a>
+                    @endcan
                     <a href="{{ route('clinic.appointments.today', app()->getLocale()) }}" class="btn btn-info ms-2"><i
                             class="uil uil-calendar-alt me-1"></i>Hari Ini</a>
                 </div>
@@ -60,12 +62,16 @@
                                         <a href="{{ route('clinic.appointments.show', [app()->getLocale(), $apt->id]) }}"
                                             class="btn btn-sm btn-outline-info"><i class="uil uil-eye"></i></a>
                                         @if($apt->status == 'waiting')
-                                            <a href="{{ route('clinic.appointments.edit', [app()->getLocale(), $apt->id]) }}"
-                                                class="btn btn-sm btn-outline-primary"><i class="uil uil-edit"></i></a>
+                                            @can('appointments.manage')
+                                                <a href="{{ route('clinic.appointments.edit', [app()->getLocale(), $apt->id]) }}"
+                                                    class="btn btn-sm btn-outline-primary"><i class="uil uil-edit"></i></a>
+                                            @endcan
                                         @endif
-                                        @if($apt->status == 'completed' && !$apt->medicalRecord)
-                                            <a href="{{ route('clinic.medical-records.create', [app()->getLocale(), $apt->id]) }}"
-                                                class="btn btn-sm btn-outline-success"><i class="uil uil-file-medical"></i></a>
+                                        @if(in_array($apt->status, ['waiting', 'in_progress']) && !$apt->medicalRecord)
+                                            @can('medical_records.manage')
+                                                <a href="{{ route('clinic.medical-records.create', [app()->getLocale(), $apt->id]) }}"
+                                                    class="btn btn-sm btn-outline-success" title="Periksa"><i class="uil uil-file-medical"></i></a>
+                                            @endcan
                                         @endif
                                     </td>
                                 </tr>

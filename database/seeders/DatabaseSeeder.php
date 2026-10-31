@@ -15,11 +15,14 @@ class DatabaseSeeder extends Seeder
     public function run()
     {
         // Create admin user for login
-        \App\Models\User::create([
+        $admin = new \App\Models\User([
             'name' => 'Admin Klinik',
             'email' => 'admin@klinik.com',
             'password' => bcrypt('password123'),
         ]);
+        $admin->role = \App\Models\Role::ADMIN;
+        $admin->is_active = true;
+        $admin->save();
 
         // Run clinic seeder
         $this->call([

@@ -164,12 +164,13 @@ class PatientController extends Controller
 
     public function search(Request $request)
     {
-        $query = $request->get('q');
+        $query = (string) $request->get('q');
         $patients = Patient::where('name', 'like', "%{$query}%")
             ->orWhere('no_rm', 'like', "%{$query}%")
             ->orWhere('nik', 'like', "%{$query}%")
             ->limit(10)
-            ->get();
+            // Only what a search dropdown needs; no address, phone or medical details
+            ->get(['id', 'no_rm', 'name', 'nik', 'gender', 'birth_date']);
         return response()->json($patients);
     }
 }

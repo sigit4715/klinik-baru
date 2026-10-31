@@ -214,21 +214,29 @@
             <div class="col-lg-7">
                 <!-- Action Buttons -->
                 <div class="d-flex flex-wrap gap-2 mb-3">
-                    @if($appointment->status == 'waiting')
-                        <a href="{{ route('clinic.medical-records.create', [app()->getLocale(), $appointment->id]) }}"
-                            class="btn btn-success"><i class="uil uil-stethoscope me-1"></i>Mulai Periksa</a>
+                    @if(in_array($appointment->status, ['waiting', 'in_progress']) && !$appointment->medicalRecord)
+                        @can('medical_records.manage')
+                            <a href="{{ route('clinic.medical-records.create', [app()->getLocale(), $appointment->id]) }}"
+                                class="btn btn-success"><i class="uil uil-stethoscope me-1"></i>Mulai Periksa</a>
+                        @endcan
                     @endif
                     @if($appointment->status == 'completed' && $appointment->medicalRecord)
-                        <a href="{{ route('clinic.medical-records.show', [app()->getLocale(), $appointment->medicalRecord->id]) }}"
-                            class="btn btn-info"><i class="uil uil-file-medical me-1"></i>Lihat Rekam Medis</a>
+                        @can('medical_records.view')
+                            <a href="{{ route('clinic.medical-records.show', [app()->getLocale(), $appointment->medicalRecord->id]) }}"
+                                class="btn btn-info"><i class="uil uil-file-medical me-1"></i>Lihat Rekam Medis</a>
+                        @endcan
                     @endif
                     @if($appointment->status == 'completed' && !$appointment->payment)
-                        <a href="{{ route('clinic.payments.create', [app()->getLocale(), $appointment->id]) }}"
-                            class="btn btn-warning"><i class="uil uil-bill me-1"></i>Buat Pembayaran</a>
+                        @can('payments.manage')
+                            <a href="{{ route('clinic.payments.create', [app()->getLocale(), $appointment->id]) }}"
+                                class="btn btn-warning"><i class="uil uil-bill me-1"></i>Buat Pembayaran</a>
+                        @endcan
                     @endif
                     @if($appointment->payment)
-                        <a href="{{ route('clinic.payments.show', [app()->getLocale(), $appointment->payment->id]) }}"
-                            class="btn btn-outline-success"><i class="uil uil-receipt me-1"></i>Lihat Invoice</a>
+                        @can('payments.view')
+                            <a href="{{ route('clinic.payments.show', [app()->getLocale(), $appointment->payment->id]) }}"
+                                class="btn btn-outline-success"><i class="uil uil-receipt me-1"></i>Lihat Invoice</a>
+                        @endcan
                     @endif
                     <a href="{{ route('clinic.appointments.index', app()->getLocale()) }}" class="btn btn-light">Kembali</a>
                 </div>

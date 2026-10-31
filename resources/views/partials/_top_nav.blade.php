@@ -857,17 +857,21 @@
             </li>
             <li class="nav-notification">
                 @php
-                    $pendingPayments = \App\Models\Payment::where('status', 'pending')->count();
-                    $lowStockMedicines = \App\Models\Medicine::where('status', 'active')
-                        ->whereColumn('stock', '<=', 'min_stock')
-                        ->take(5)
-                        ->get();
-                    $lowStockCount = \App\Models\Medicine::where('status', 'active')
-                        ->whereColumn('stock', '<=', 'min_stock')
-                        ->count();
-                    $todayPayments = \App\Models\Payment::whereDate('created_at', today())
-                        ->where('status', 'paid')
-                        ->sum('total');
+                    // Notifications follow the user's permissions
+                    $canFinance = auth()->user()?->can('reports.finance');
+                    $canPayments = auth()->user()?->can('payments.view');
+                    $canMedicines = auth()->user()?->can('medicines.view');
+
+                    $pendingPayments = $canPayments ? \App\Models\Payment::where('status', 'pending')->count() : 0;
+                    $lowStockMedicines = $canMedicines
+                        ? \App\Models\Medicine::where('status', 'active')->whereColumn('stock', '<=', 'min_stock')->take(5)->get()
+                        : collect();
+                    $lowStockCount = $canMedicines
+                        ? \App\Models\Medicine::where('status', 'active')->whereColumn('stock', '<=', 'min_stock')->count()
+                        : 0;
+                    $todayPayments = $canFinance
+                        ? \App\Models\Payment::whereDate('created_at', today())->where('status', 'paid')->sum('total')
+                        : 0;
                     $notifCount = $pendingPayments + $lowStockCount;
                 @endphp
                 <div class="dropdown-custom">
@@ -879,6 +883,7 @@
                         class="badge-circle badge-warning ms-1">{{ $notifCount }}</span>@endif</h2>
                         <ul>
                             {{-- Pendapatan Hari Ini --}}
+                            @if($canFinance)
                             <li class="nav-notification__single d-flex flex-wrap">
                                 <div class="nav-notification__type nav-notification__type--success">
                                     <i class="uil uil-money-bill fs-5"></i>
@@ -894,6 +899,7 @@
                                     </p>
                                 </div>
                             </li>
+                            @endif
 
                             {{-- Pembayaran Pending --}}
                             @if($pendingPayments > 0)
@@ -1039,15 +1045,7 @@
                             <div>
                                 @if(Auth::check())
                                     <h6 class="text-capitalize">{{ Auth::user()->name }}</h6>
-                                    @php
-                                        $roles = [
-                                            'admin' => 'Administrator',
-                                            'doctor' => 'Dokter',
-                                            'cashier' => 'Kasir',
-                                            'staff' => 'Staff'
-                                        ];
-                                    @endphp
-                                    <span class="text-primary">{{ $roles[Auth::user()->role] ?? 'Administrator' }}</span>
+                                    <span class="text-primary">{{ Auth::user()->roleLabel() }}</span>
                                 @endif
                             </div>
                         </div>
@@ -1057,18 +1055,24 @@
                                     <a href="{{ route('clinic.dashboard', app()->getLocale()) }}">
                                         <i class="uil uil-home-alt me-2"></i>Dashboard</a>
                                 </li>
-                                <li>
-                                    <a href="{{ route('clinic.users.edit', [app()->getLocale(), Auth::id()]) }}">
-                                        <i class="uil uil-user me-2"></i>Profil Saya</a>
-                                </li>
-                                <li>
-                                    <a href="{{ route('clinic.settings.profile', app()->getLocale()) }}">
-                                        <i class="uil uil-building me-2"></i>Profil Klinik</a>
-                                </li>
-                                <li>
-                                    <a href="{{ route('clinic.users.index', app()->getLocale()) }}">
-                                        <i class="uil uil-users-alt me-2"></i>Manajemen User</a>
-                                </li>
+                                @can('users.manage')
+                                    <li>
+                                        <a href="{{ route('clinic.users.edit', [app()->getLocale(), Auth::id()]) }}">
+                                            <i class="uil uil-user me-2"></i>Profil Saya</a>
+                                    </li>
+                                @endcan
+                                @can('settings.manage')
+                                    <li>
+                                        <a href="{{ route('clinic.settings.profile', app()->getLocale()) }}">
+                                            <i class="uil uil-building me-2"></i>Profil Klinik</a>
+                                    </li>
+                                @endcan
+                                @can('users.manage')
+                                    <li>
+                                        <a href="{{ route('clinic.users.index', app()->getLocale()) }}">
+                                            <i class="uil uil-users-alt me-2"></i>Manajemen User</a>
+                                    </li>
+                                @endcan
                             </ul>
                             <a href="" class="nav-author__signout"
                                 onclick="event.preventDefault();document.getElementById('logout').submit();">

@@ -34,14 +34,18 @@
                                             <strong>{{ \Carbon\Carbon::now()->translatedFormat('l, d F Y') }}</strong>
                                         </p>
                                         <div class="d-flex justify-content-sm-start justify-content-center gap-2">
-                                            <a href="{{ route('clinic.appointments.create', app()->getLocale()) }}"
-                                                class="btn btn-primary btn-md radius-xs fs-15">
-                                                <i class="uil uil-plus me-1"></i>Buat Antrian
-                                            </a>
-                                            <a href="{{ route('clinic.patients.create', app()->getLocale()) }}"
-                                                class="btn btn-outline-primary btn-md radius-xs fs-15">
-                                                <i class="uil uil-user-plus me-1"></i>Pasien Baru
-                                            </a>
+                                            @can('appointments.manage')
+                                                <a href="{{ route('clinic.appointments.create', app()->getLocale()) }}"
+                                                    class="btn btn-primary btn-md radius-xs fs-15">
+                                                    <i class="uil uil-plus me-1"></i>Buat Antrian
+                                                </a>
+                                            @endcan
+                                            @can('patients.manage')
+                                                <a href="{{ route('clinic.patients.create', app()->getLocale()) }}"
+                                                    class="btn btn-outline-primary btn-md radius-xs fs-15">
+                                                    <i class="uil uil-user-plus me-1"></i>Pasien Baru
+                                                </a>
+                                            @endcan
                                         </div>
                                     </div>
                                 </div>
@@ -57,7 +61,7 @@
                 </div>
 
                 <!-- Alert Cards -->
-                @if($lowStockMedicines > 0)
+                @if($lowStockMedicines > 0 && auth()->user()->can('medicines.view'))
                     <div class="col-12 mb-25">
                         <div class="alert-icon-area alert-icon-area--warning alert alert-warning fade show d-flex align-items-center"
                             role="alert">
@@ -75,7 +79,7 @@
                     </div>
                 @endif
 
-                @if($expiringMedicines > 0)
+                @if($expiringMedicines > 0 && auth()->user()->can('medicines.view'))
                     <div class="col-12 mb-25">
                         <div class="alert-icon-area alert-icon-area--danger alert alert-danger fade show d-flex align-items-center"
                             role="alert">
@@ -161,6 +165,7 @@
                     </div>
                 </div>
 
+                @can('reports.finance')
                 <div class="col-xxl-3 col-sm-6 mb-25">
                     <div class="ap-po-details ap-po-details--2 p-25 radius-xl d-flex justify-content-between">
                         <div class="overview-content w-100">
@@ -182,18 +187,21 @@
                         </div>
                     </div>
                 </div>
+                @endcan
 
                 <!-- Today's Queue Table -->
                 <div class="col-xxl-8 mb-25">
                     <div class="card border-0 h-100">
                         <div class="card-header">
                             <h6>Antrian Hari Ini</h6>
-                            <div class="card-extra">
-                                <a href="{{ route('clinic.appointments.today', app()->getLocale()) }}"
-                                    class="btn btn-sm btn-primary">
-                                    <i class="uil uil-eye me-1"></i>Lihat Semua
-                                </a>
-                            </div>
+                            @can('appointments.view')
+                                <div class="card-extra">
+                                    <a href="{{ route('clinic.appointments.today', app()->getLocale()) }}"
+                                        class="btn btn-sm btn-primary">
+                                        <i class="uil uil-eye me-1"></i>Lihat Semua
+                                    </a>
+                                </div>
+                            @endcan
                         </div>
                         <div class="card-body p-0">
                             <div class="table-responsive">
@@ -245,10 +253,12 @@
                                                     @endif
                                                 </td>
                                                 <td>
-                                                    <a href="{{ route('clinic.appointments.show', [app()->getLocale(), $queue->id]) }}"
-                                                        class="btn btn-default btn-squared btn-transparent-light">
-                                                        <i class="uil uil-eye"></i>
-                                                    </a>
+                                                    @can('appointments.view')
+                                                        <a href="{{ route('clinic.appointments.show', [app()->getLocale(), $queue->id]) }}"
+                                                            class="btn btn-default btn-squared btn-transparent-light">
+                                                            <i class="uil uil-eye"></i>
+                                                        </a>
+                                                    @endcan
                                                 </td>
                                             </tr>
                                         @empty
@@ -274,6 +284,7 @@
                 </div>
 
                 <!-- Revenue Summary -->
+                @can('reports.finance')
                 <div class="col-xxl-4 mb-25">
                     <div class="card border-0 h-100">
                         <div class="card-header">
@@ -324,6 +335,7 @@
                         </div>
                     </div>
                 </div>
+                @endcan
 
                 <!-- Doctor & Status Summary -->
                 <div class="col-xxl-4 col-lg-6 mb-25">
@@ -406,22 +418,30 @@
                         </div>
                         <div class="card-body">
                             <div class="d-grid gap-2">
-                                <a href="{{ route('clinic.appointments.create', app()->getLocale()) }}"
-                                    class="btn btn-primary btn-lg">
-                                    <i class="uil uil-plus me-2"></i>Buat Antrian Baru
-                                </a>
-                                <a href="{{ route('clinic.patients.create', app()->getLocale()) }}"
-                                    class="btn btn-outline-primary btn-lg">
-                                    <i class="uil uil-user-plus me-2"></i>Daftar Pasien Baru
-                                </a>
-                                <a href="{{ route('clinic.appointments.today', app()->getLocale()) }}"
-                                    class="btn btn-outline-info btn-lg">
-                                    <i class="uil uil-list-ul me-2"></i>Lihat Antrian Hari Ini
-                                </a>
-                                <a href="{{ route('clinic.payments.report', app()->getLocale()) }}"
-                                    class="btn btn-outline-success btn-lg">
-                                    <i class="uil uil-file-graph me-2"></i>Laporan Keuangan
-                                </a>
+                                @can('appointments.manage')
+                                    <a href="{{ route('clinic.appointments.create', app()->getLocale()) }}"
+                                        class="btn btn-primary btn-lg">
+                                        <i class="uil uil-plus me-2"></i>Buat Antrian Baru
+                                    </a>
+                                @endcan
+                                @can('patients.manage')
+                                    <a href="{{ route('clinic.patients.create', app()->getLocale()) }}"
+                                        class="btn btn-outline-primary btn-lg">
+                                        <i class="uil uil-user-plus me-2"></i>Daftar Pasien Baru
+                                    </a>
+                                @endcan
+                                @can('appointments.view')
+                                    <a href="{{ route('clinic.appointments.today', app()->getLocale()) }}"
+                                        class="btn btn-outline-info btn-lg">
+                                        <i class="uil uil-list-ul me-2"></i>Lihat Antrian Hari Ini
+                                    </a>
+                                @endcan
+                                @can('reports.finance')
+                                    <a href="{{ route('clinic.payments.report', app()->getLocale()) }}"
+                                        class="btn btn-outline-success btn-lg">
+                                        <i class="uil uil-file-graph me-2"></i>Laporan Keuangan
+                                    </a>
+                                @endcan
                             </div>
                         </div>
                     </div>

@@ -68,19 +68,23 @@
                     <input type="search" name="search" placeholder="Cari nama/No.RM..." value="{{ request('search') }}"
                         class="border-0" style="outline: none; width: 180px;">
                 </form>
-                <a href="{{ route('clinic.appointments.display', app()->getLocale()) }}" class="btn btn-outline-primary"
-                    target="_blank">
-                    <i class="uil uil-tv-retro me-1"></i>Buka Display TV
-                </a>
-                <select id="callDoctor" class="form-select" style="width: auto;" title="Panggil antrian untuk dokter">
-                    <option value="">Semua dokter</option>
-                    @foreach($doctors as $doctor)
-                        <option value="{{ $doctor->id }}">{{ $doctor->name }}</option>
-                    @endforeach
-                </select>
-                <button type="button" class="btn btn-call-next" id="btnCallNext">
-                    <i class="uil uil-megaphone me-1"></i>Panggil Antrian Berikutnya
-                </button>
+                @can('queue.display')
+                    <a href="{{ route('clinic.appointments.display', app()->getLocale()) }}" class="btn btn-outline-primary"
+                        target="_blank">
+                        <i class="uil uil-tv-retro me-1"></i>Buka Display TV
+                    </a>
+                @endcan
+                @can('appointments.call')
+                    <select id="callDoctor" class="form-select" style="width: auto;" title="Panggil antrian untuk dokter">
+                        <option value="">Semua dokter</option>
+                        @foreach($doctors as $doctor)
+                            <option value="{{ $doctor->id }}">{{ $doctor->name }}</option>
+                        @endforeach
+                    </select>
+                    <button type="button" class="btn btn-call-next" id="btnCallNext">
+                        <i class="uil uil-megaphone me-1"></i>Panggil Antrian Berikutnya
+                    </button>
+                @endcan
                 <button type="button" class="btn btn-secondary" id="btnRepeat" style="display: none;">
                     <i class="uil uil-redo me-1"></i>Panggil Ulang
                 </button>
@@ -125,16 +129,20 @@
                                             <td>
                                                 <div class="d-flex gap-1 flex-wrap">
                                                     @if($apt->status == 'waiting')
-                                                        <button type="button" class="btn btn-sm btn-call btn-call-specific"
-                                                            data-id="{{ $apt->id }}" data-queue="{{ $apt->queue_number }}"
-                                                            data-patient="{{ $apt->patient->name }}"
-                                                            data-doctor="{{ $apt->doctor->name }}">
-                                                            <i class="uil uil-megaphone"></i> Panggil
-                                                        </button>
-                                                        <a href="{{ route('clinic.medical-records.create', [app()->getLocale(), $apt->id]) }}"
-                                                            class="btn btn-sm btn-success">
-                                                            <i class="uil uil-stethoscope"></i> Periksa
-                                                        </a>
+                                                        @can('appointments.call')
+                                                            <button type="button" class="btn btn-sm btn-call btn-call-specific"
+                                                                data-id="{{ $apt->id }}" data-queue="{{ $apt->queue_number }}"
+                                                                data-patient="{{ $apt->patient->name }}"
+                                                                data-doctor="{{ $apt->doctor->name }}">
+                                                                <i class="uil uil-megaphone"></i> Panggil
+                                                            </button>
+                                                        @endcan
+                                                        @can('medical_records.manage')
+                                                            <a href="{{ route('clinic.medical-records.create', [app()->getLocale(), $apt->id]) }}"
+                                                                class="btn btn-sm btn-success">
+                                                                <i class="uil uil-stethoscope"></i> Periksa
+                                                            </a>
+                                                        @endcan
                                                     @elseif($apt->status == 'in_progress')
                                                         <button type="button" class="btn btn-sm btn-outline-info btn-speak"
                                                             data-queue="{{ $apt->queue_number }}"
@@ -142,20 +150,26 @@
                                                             data-doctor="{{ $apt->doctor->name }}">
                                                             <i class="uil uil-volume-up"></i>
                                                         </button>
-                                                        <a href="{{ route('clinic.medical-records.create', [app()->getLocale(), $apt->id]) }}"
-                                                            class="btn btn-sm btn-info">
-                                                            <i class="uil uil-file-medical"></i> Rekam Medis
-                                                        </a>
+                                                        @can('medical_records.manage')
+                                                            <a href="{{ route('clinic.medical-records.create', [app()->getLocale(), $apt->id]) }}"
+                                                                class="btn btn-sm btn-info">
+                                                                <i class="uil uil-file-medical"></i> Rekam Medis
+                                                            </a>
+                                                        @endcan
                                                     @elseif($apt->status == 'completed' && !$apt->payment)
-                                                        <a href="{{ route('clinic.payments.create', [app()->getLocale(), $apt->id]) }}"
-                                                            class="btn btn-sm btn-warning">
-                                                            <i class="uil uil-receipt"></i> Pembayaran
-                                                        </a>
+                                                        @can('payments.manage')
+                                                            <a href="{{ route('clinic.payments.create', [app()->getLocale(), $apt->id]) }}"
+                                                                class="btn btn-sm btn-warning">
+                                                                <i class="uil uil-receipt"></i> Pembayaran
+                                                            </a>
+                                                        @endcan
                                                     @elseif($apt->status == 'completed' && $apt->payment)
-                                                        <a href="{{ route('clinic.payments.receipt', [app()->getLocale(), $apt->payment->id]) }}"
-                                                            class="btn btn-sm btn-warning" target="_blank" title="Cetak Struk Pembayaran">
-                                                            <i class="uil uil-bill"></i> Invoice
-                                                        </a>
+                                                        @can('payments.view')
+                                                            <a href="{{ route('clinic.payments.receipt', [app()->getLocale(), $apt->payment->id]) }}"
+                                                                class="btn btn-sm btn-warning" target="_blank" title="Cetak Struk Pembayaran">
+                                                                <i class="uil uil-bill"></i> Invoice
+                                                            </a>
+                                                        @endcan
                                                     @endif
                                                     {{-- Struk Antrian Button - Available for all statuses --}}
                                                     <a href="{{ route('clinic.appointments.print-struk', [app()->getLocale(), $apt->id]) }}"
@@ -169,17 +183,19 @@
                                                         <i class="uil uil-eye"></i> Detail
                                                     </a>
                                                     {{-- Delete Button --}}
-                                                    <form
-                                                        action="{{ route('clinic.appointments.destroy', [app()->getLocale(), $apt->id]) }}"
-                                                        method="POST" class="d-inline delete-form"
-                                                        onsubmit="return confirm('Apakah Anda yakin ingin menghapus antrian {{ $apt->queue_number }} ({{ $apt->patient->name }})?')">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" class="btn btn-sm btn-outline-danger"
-                                                            title="Hapus">
-                                                            <i class="uil uil-trash-alt"></i>
-                                                        </button>
-                                                    </form>
+                                                    @can('appointments.delete')
+                                                        <form
+                                                            action="{{ route('clinic.appointments.destroy', [app()->getLocale(), $apt->id]) }}"
+                                                            method="POST" class="d-inline delete-form"
+                                                            onsubmit="return confirm(@js('Apakah Anda yakin ingin menghapus antrian ' . $apt->queue_number . ' (' . $apt->patient->name . ')?'))">
+                                                            @csrf
+                                                            @method('DELETE')
+                                                            <button type="submit" class="btn btn-sm btn-outline-danger"
+                                                                title="Hapus">
+                                                                <i class="uil uil-trash-alt"></i>
+                                                            </button>
+                                                        </form>
+                                                    @endcan
                                                 </div>
                                             </td>
                                         </tr>
@@ -231,7 +247,7 @@
             const btnRepeat = document.getElementById('btnRepeat');
 
             // Call Next button
-            document.getElementById('btnCallNext').addEventListener('click', async function () {
+            document.getElementById('btnCallNext')?.addEventListener('click', async function () {
                 this.disabled = true;
                 this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memanggil...';
 

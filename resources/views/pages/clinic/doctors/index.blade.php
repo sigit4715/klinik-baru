@@ -10,12 +10,14 @@
                         <div class="d-flex align-items-center add-contact__title justify-content-center me-sm-25">
                             <h4 class="text-capitalize fw-500 breadcrumb-title">{{ $title }}</h4>
                         </div>
-                        <div class="action-btn mt-sm-0 mt-15">
-                            <a href="{{ route('clinic.doctors.create', app()->getLocale()) }}"
-                                class="btn px-20 btn-primary">
-                                <i class="las la-plus fs-16"></i>Tambah Dokter
-                            </a>
-                        </div>
+                        @can('doctors.manage')
+                            <div class="action-btn mt-sm-0 mt-15">
+                                <a href="{{ route('clinic.doctors.create', app()->getLocale()) }}"
+                                    class="btn px-20 btn-primary">
+                                    <i class="las la-plus fs-16"></i>Tambah Dokter
+                                </a>
+                            </div>
+                        @endcan
                     </div>
                 </div>
             </div>
@@ -63,19 +65,23 @@
                                 class="btn btn-sm btn-outline-info">
                                 <i class="uil uil-eye"></i>
                             </a>
-                            <a href="{{ route('clinic.doctors.edit', [app()->getLocale(), $doctor->id]) }}"
-                                class="btn btn-sm btn-outline-primary">
-                                <i class="uil uil-edit"></i>
-                            </a>
-                            <a href="#" class="btn btn-sm btn-outline-danger"
-                                onclick="event.preventDefault(); if(confirm('Yakin hapus?')) document.getElementById('delete-{{ $doctor->id }}').submit();">
-                                <i class="uil uil-trash-alt"></i>
-                            </a>
-                            <form id="delete-{{ $doctor->id }}"
-                                action="{{ route('clinic.doctors.destroy', [app()->getLocale(), $doctor->id]) }}" method="POST"
-                                class="d-none">
-                                @csrf @method('DELETE')
-                            </form>
+                            @can('doctors.manage')
+                                <a href="{{ route('clinic.doctors.edit', [app()->getLocale(), $doctor->id]) }}"
+                                    class="btn btn-sm btn-outline-primary">
+                                    <i class="uil uil-edit"></i>
+                                </a>
+                            @endcan
+                            @can('doctors.delete')
+                                <a href="#" class="btn btn-sm btn-outline-danger"
+                                    onclick="event.preventDefault(); if(confirm('Yakin hapus?')) document.getElementById('delete-{{ $doctor->id }}').submit();">
+                                    <i class="uil uil-trash-alt"></i>
+                                </a>
+                                <form id="delete-{{ $doctor->id }}"
+                                    action="{{ route('clinic.doctors.destroy', [app()->getLocale(), $doctor->id]) }}" method="POST"
+                                    class="d-none">
+                                    @csrf @method('DELETE')
+                                </form>
+                            @endcan
                         </div>
                     </div>
                 </div>
@@ -85,8 +91,10 @@
                         <div class="card-body text-center py-5">
                             <i class="uil uil-user-md text-muted" style="font-size: 60px;"></i>
                             <p class="text-muted mt-3">Belum ada data dokter</p>
-                            <a href="{{ route('clinic.doctors.create', app()->getLocale()) }}" class="btn btn-primary">Tambah
-                                Dokter</a>
+                            @can('doctors.manage')
+                                <a href="{{ route('clinic.doctors.create', app()->getLocale()) }}" class="btn btn-primary">Tambah
+                                    Dokter</a>
+                            @endcan
                         </div>
                     </div>
                 </div>

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 use Validator;
 use Auth;
 use App\Models\User;
@@ -91,18 +93,32 @@ class AuthController extends Controller
             return redirect()->route('login')->withErrors($validators)->withInput();
         }
 
-        // Check if user exists and is active
-        $user = User::where('email', $request->email)->first();
+        // Brute-force protection: 5 failed attempts per email + IP, then wait
+        $throttleKey = Str::lower($request->email) . '|' . $request->ip();
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+            return redirect()->route('login')->withInput($request->only('email'))
+                ->with('message', "Terlalu banyak percobaan login. Coba lagi dalam {$seconds} detik.");
+        }
 
-        if ($user && !$user->is_active) {
+        // Check the password first so the response does not reveal which emails exist
+        $credentials = ['email' => $request->email, 'password' => $request->password];
+        if (! Auth::validate($credentials)) {
+            RateLimiter::hit($throttleKey, 60);
+            return redirect()->route('login')->withInput($request->only('email'))
+                ->with('message', 'Login gagal! Email atau password salah.');
+        }
+        RateLimiter::clear($throttleKey);
+
+        $user = Auth::getLastAttempted();
+        if (! $user->is_active) {
             return redirect()->route('login')->with('message', 'Akun Anda belum diaktifkan oleh admin. Silakan tunggu verifikasi dari admin.');
         }
 
-        if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
-            return redirect()->intended(route('clinic.dashboard', 'en'))->with('message', 'Selamat datang kembali!');
-        } else {
-            return redirect()->route('login')->with('message', 'Login gagal! Email atau password salah.');
-        }
+        Auth::login($user, $request->boolean('remember'));
+        $request->session()->regenerate();
+
+        return redirect()->intended(route('clinic.dashboard', 'en'))->with('message', 'Selamat datang kembali!');
     }
 
     /**
@@ -131,15 +147,17 @@ class AuthController extends Controller
 
             if (!$user) {
                 // Auto-register new user with inactive status
-                $user = User::create([
+                $user = new User([
                     'name' => $googleUser->getName(),
                     'email' => $googleUser->getEmail(),
-                    'password' => bcrypt(uniqid()), // Random password
-                    'is_active' => false, // Inactive until admin approves
-                    'role' => 'staff',
+                    'password' => bcrypt(Str::random(40)), // Random password
                     'google_id' => $googleUser->getId(),
                     'avatar' => $googleUser->getAvatar(), // Google profile photo
                 ]);
+                // Not mass assignable on purpose: new accounts wait for admin approval
+                $user->is_active = false;
+                $user->role = 'staff';
+                $user->save();
 
                 return redirect()->route('login')->with('message', 'Pendaftaran berhasil menggunakan Google! Akun Anda (' . $googleUser->getEmail() . ') sedang menunggu verifikasi dari admin. Anda akan dapat login setelah admin mengaktifkan akun Anda.');
             }
@@ -159,6 +177,7 @@ class AuthController extends Controller
 
             // Login the user
             Auth::login($user);
+            request()->session()->regenerate();
 
             return redirect()->intended(route('clinic.dashboard', 'en'))->with('message', 'Selamat datang kembali, ' . $user->name . '!');
 
@@ -174,9 +193,12 @@ class AuthController extends Controller
      *
      * @return 
      */
-    public function logout()
+    public function logout(Request $request)
     {
         Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
         return redirect()->route('login')->with('message', 'Anda berhasil logout!');
     }
 }

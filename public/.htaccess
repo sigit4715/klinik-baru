@@ -5,6 +5,9 @@
 
     RewriteEngine On
 
+    # Never run scripts from uploaded files (public/storage -> storage/app/public)
+    RewriteRule ^storage/.*\.(php[0-9]?|phtml|phar|pl|py|cgi|sh)$ - [F,L,NC]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]

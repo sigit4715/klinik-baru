@@ -46,10 +46,12 @@
         <div class="breadcrumb-main add-contact justify-content-sm-between">
             <div class="d-flex flex-wrap justify-content-center breadcrumb-main__wrapper">
                 <h4 class="text-capitalize fw-500 breadcrumb-title">{{ $title }}</h4>
-                <div class="action-btn mt-sm-0 mt-15 ms-3">
-                    <a href="{{ route('clinic.medicines.create', app()->getLocale()) }}" class="btn px-20 btn-primary"><i
-                            class="las la-plus fs-16"></i>Tambah Obat</a>
-                </div>
+                @can('medicines.manage')
+                    <div class="action-btn mt-sm-0 mt-15 ms-3">
+                        <a href="{{ route('clinic.medicines.create', app()->getLocale()) }}" class="btn px-20 btn-primary"><i
+                                class="las la-plus fs-16"></i>Tambah Obat</a>
+                    </div>
+                @endcan
             </div>
             <div class="d-flex gap-2">
                 @if($lowStockCount > 0)
@@ -163,14 +165,18 @@
                                             class="badge bg-{{ $medicine->status == 'active' ? 'success' : 'secondary' }}">{{ $medicine->status == 'active' ? 'Aktif' : 'Tidak Aktif' }}</span>
                                     </td>
                                     <td>
-                                        <a href="{{ route('clinic.medicines.edit', [app()->getLocale(), $medicine->id]) }}"
-                                            class="btn btn-sm btn-outline-primary"><i class="uil uil-edit"></i></a>
-                                        <a href="#"
-                                            onclick="event.preventDefault(); if(confirm('Hapus?')) document.getElementById('del-{{ $medicine->id }}').submit();"
-                                            class="btn btn-sm btn-outline-danger"><i class="uil uil-trash"></i></a>
-                                        <form id="del-{{ $medicine->id }}"
-                                            action="{{ route('clinic.medicines.destroy', [app()->getLocale(), $medicine->id]) }}"
-                                            method="POST" class="d-none">@csrf @method('DELETE')</form>
+                                        @can('medicines.manage')
+                                            <a href="{{ route('clinic.medicines.edit', [app()->getLocale(), $medicine->id]) }}"
+                                                class="btn btn-sm btn-outline-primary"><i class="uil uil-edit"></i></a>
+                                        @endcan
+                                        @can('medicines.delete')
+                                            <a href="#"
+                                                onclick="event.preventDefault(); if(confirm('Hapus?')) document.getElementById('del-{{ $medicine->id }}').submit();"
+                                                class="btn btn-sm btn-outline-danger"><i class="uil uil-trash"></i></a>
+                                            <form id="del-{{ $medicine->id }}"
+                                                action="{{ route('clinic.medicines.destroy', [app()->getLocale(), $medicine->id]) }}"
+                                                method="POST" class="d-none">@csrf @method('DELETE')</form>
+                                        @endcan
                                     </td>
                                 </tr>
                             @empty

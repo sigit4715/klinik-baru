@@ -338,9 +338,11 @@
                         <i class="uil uil-search"></i>
                         <input type="search" name="search" placeholder="Cari nama/no.RM..." value="{{ request('search') }}">
                     </form>
-                    <a href="{{ route('clinic.patients.create', app()->getLocale()) }}" class="btn-add-patient">
-                        <i class="uil uil-plus"></i>Tambah Pasien
-                    </a>
+                    @can('patients.manage')
+                        <a href="{{ route('clinic.patients.create', app()->getLocale()) }}" class="btn-add-patient">
+                            <i class="uil uil-plus"></i>Tambah Pasien
+                        </a>
+                    @endcan
                 </div>
             </div>
         </div>
@@ -525,20 +527,24 @@
                                             class="action-btn view" title="Lihat Detail">
                                             <i class="uil uil-eye"></i>
                                         </a>
-                                        <a href="{{ route('clinic.patients.edit', [app()->getLocale(), $patient->id]) }}"
-                                            class="action-btn edit" title="Edit">
-                                            <i class="uil uil-edit"></i>
-                                        </a>
-                                        <a href="#" class="action-btn delete" title="Hapus"
-                                            onclick="event.preventDefault(); if(confirm('Yakin ingin menghapus pasien {{ $patient->name }}?')) { document.getElementById('delete-{{ $patient->id }}').submit(); }">
-                                            <i class="uil uil-trash-alt"></i>
-                                        </a>
-                                        <form style="display:none;" id="delete-{{ $patient->id }}"
-                                            action="{{ route('clinic.patients.destroy', [app()->getLocale(), $patient->id]) }}"
-                                            method="POST">
-                                            @csrf
-                                            @method('DELETE')
-                                        </form>
+                                        @can('patients.manage')
+                                            <a href="{{ route('clinic.patients.edit', [app()->getLocale(), $patient->id]) }}"
+                                                class="action-btn edit" title="Edit">
+                                                <i class="uil uil-edit"></i>
+                                            </a>
+                                        @endcan
+                                        @can('patients.delete')
+                                            <a href="#" class="action-btn delete" title="Hapus"
+                                                onclick="event.preventDefault(); if(confirm(@js('Yakin ingin menghapus pasien ' . $patient->name . '?'))) { document.getElementById('delete-{{ $patient->id }}').submit(); }">
+                                                <i class="uil uil-trash-alt"></i>
+                                            </a>
+                                            <form style="display:none;" id="delete-{{ $patient->id }}"
+                                                action="{{ route('clinic.patients.destroy', [app()->getLocale(), $patient->id]) }}"
+                                                method="POST">
+                                                @csrf
+                                                @method('DELETE')
+                                            </form>
+                                        @endcan
                                     </div>
                                 </td>
                             </tr>
@@ -548,10 +554,12 @@
                                     <div class="empty-state">
                                         <i class="uil uil-users-alt"></i>
                                         <p>Belum ada data pasien</p>
-                                        <a href="{{ route('clinic.patients.create', app()->getLocale()) }}"
-                                            class="btn btn-primary mt-3">
-                                            <i class="uil uil-plus me-1"></i>Tambah Pasien Pertama
-                                        </a>
+                                        @can('patients.manage')
+                                            <a href="{{ route('clinic.patients.create', app()->getLocale()) }}"
+                                                class="btn btn-primary mt-3">
+                                                <i class="uil uil-plus me-1"></i>Tambah Pasien Pertama
+                                            </a>
+                                        @endcan
                                     </div>
                                 </td>
                             </tr>

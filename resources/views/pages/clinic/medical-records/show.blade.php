@@ -221,7 +221,7 @@
                 @endif
 
                 <div class="mt-3">
-                    @if($record->appointment && !$record->appointment->payment)
+                    @if($record->appointment && !$record->appointment->payment && auth()->user()->can('payments.manage'))
                         <a href="{{ route('clinic.payments.create', [app()->getLocale(), $record->appointment_id]) }}"
                             class="btn btn-warning"><i class="uil uil-bill me-1"></i>Buat Pembayaran</a>
                     @endif

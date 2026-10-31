@@ -1,198 +1,258 @@
+@php
+    $locale = app()->getLocale();
+    $is = fn (string $path) => Request::is($locale . '/clinic/' . $path);
+@endphp
+{{-- Each menu item is shown only if the user's role has the matching permission (config/permissions.php). --}}
 <div class="sidebar__menu-group">
     <ul class="sidebar_nav">
         <li class="menu-title">
             <span>Klinik</span>
         </li>
         <li>
-            <a href="{{ route('clinic.dashboard', app()->getLocale()) }}"
-                class="{{ Request::is(app()->getLocale() . '/clinic') ? 'active' : '' }}">
+            <a href="{{ route('clinic.dashboard', $locale) }}" class="{{ $is('dashboard') ? 'active' : '' }}">
                 <span class="nav-icon uil uil-estate"></span>
                 <span class="menu-text">Dashboard</span>
             </a>
         </li>
-        <li>
-            <a href="{{ route('clinic.appointments.today', app()->getLocale()) }}"
-                class="{{ Request::is(app()->getLocale() . '/clinic/appointments/today') ? 'active' : '' }}">
-                <span class="nav-icon uil uil-list-ol"></span>
-                <span class="menu-text">Antrian Hari Ini</span>
-            </a>
-        </li>
-        <li class="has-child {{ Request::is(app()->getLocale() . '/clinic/patients*') ? 'open' : '' }}">
-            <a href="#" class="{{ Request::is(app()->getLocale() . '/clinic/patients*') ? 'active' : '' }}">
-                <span class="nav-icon uil uil-users-alt"></span>
-                <span class="menu-text">Pasien</span>
-                <span class="toggle-icon"></span>
-            </a>
-            <ul>
-                <li><a class="{{ Request::is(app()->getLocale() . '/clinic/patients') ? 'active' : '' }}"
-                        href="{{ route('clinic.patients.index', app()->getLocale()) }}">Daftar Pasien</a></li>
-                <li><a class="{{ Request::is(app()->getLocale() . '/clinic/patients/create') ? 'active' : '' }}"
-                        href="{{ route('clinic.patients.create', app()->getLocale()) }}">Tambah Pasien</a></li>
-            </ul>
-        </li>
-        <li
-            class="has-child {{ Request::is(app()->getLocale() . '/clinic/appointments*') && !Request::is(app()->getLocale() . '/clinic/appointments/today') ? 'open' : '' }}">
-            <a href="#" class="{{ Request::is(app()->getLocale() . '/clinic/appointments*') ? 'active' : '' }}">
-                <span class="nav-icon uil uil-calendar-alt"></span>
-                <span class="menu-text">Pendaftaran</span>
-                <span class="toggle-icon"></span>
-            </a>
-            <ul>
-                <li><a class="{{ Request::is(app()->getLocale() . '/clinic/appointments') ? 'active' : '' }}"
-                        href="{{ route('clinic.appointments.index', app()->getLocale()) }}">Semua Antrian</a></li>
-                <li><a class="{{ Request::is(app()->getLocale() . '/clinic/appointments/create') ? 'active' : '' }}"
-                        href="{{ route('clinic.appointments.create', app()->getLocale()) }}">Buat Antrian</a></li>
-            </ul>
-        </li>
+        @can('appointments.view')
+            <li>
+                <a href="{{ route('clinic.appointments.today', $locale) }}" class="{{ $is('appointments/today') ? 'active' : '' }}">
+                    <span class="nav-icon uil uil-list-ol"></span>
+                    <span class="menu-text">Antrian Hari Ini</span>
+                </a>
+            </li>
+        @endcan
+        @canany(['patients.view', 'patients.manage'])
+            <li class="has-child {{ $is('patients*') ? 'open' : '' }}">
+                <a href="#" class="{{ $is('patients*') ? 'active' : '' }}">
+                    <span class="nav-icon uil uil-users-alt"></span>
+                    <span class="menu-text">Pasien</span>
+                    <span class="toggle-icon"></span>
+                </a>
+                <ul>
+                    @can('patients.view')
+                        <li><a class="{{ $is('patients') ? 'active' : '' }}"
+                                href="{{ route('clinic.patients.index', $locale) }}">Daftar Pasien</a></li>
+                    @endcan
+                    @can('patients.manage')
+                        <li><a class="{{ $is('patients/create') ? 'active' : '' }}"
+                                href="{{ route('clinic.patients.create', $locale) }}">Tambah Pasien</a></li>
+                    @endcan
+                </ul>
+            </li>
+        @endcanany
+        @canany(['appointments.view', 'appointments.manage'])
+            <li class="has-child {{ $is('appointments*') && !$is('appointments/today') ? 'open' : '' }}">
+                <a href="#" class="{{ $is('appointments*') ? 'active' : '' }}">
+                    <span class="nav-icon uil uil-calendar-alt"></span>
+                    <span class="menu-text">Pendaftaran</span>
+                    <span class="toggle-icon"></span>
+                </a>
+                <ul>
+                    @can('appointments.view')
+                        <li><a class="{{ $is('appointments') ? 'active' : '' }}"
+                                href="{{ route('clinic.appointments.index', $locale) }}">Semua Antrian</a></li>
+                    @endcan
+                    @can('appointments.manage')
+                        <li><a class="{{ $is('appointments/create') ? 'active' : '' }}"
+                                href="{{ route('clinic.appointments.create', $locale) }}">Buat Antrian</a></li>
+                    @endcan
+                    @can('queue.display')
+                        <li><a href="{{ route('clinic.appointments.display', $locale) }}" target="_blank">Display TV</a></li>
+                    @endcan
+                </ul>
+            </li>
+        @endcanany
 
-        <li class="menu-title mt-30">
-            <span>Tindakan Dokter</span>
-        </li>
-        <li>
-            <a href="{{ route('clinic.appointments.today', app()->getLocale()) }}"
-                class="{{ Request::is(app()->getLocale() . '/clinic/appointments/today') ? 'active' : '' }}">
-                <span class="nav-icon uil uil-stethoscope"></span>
-                <span class="menu-text">Pasien Menunggu</span>
-            </a>
-        </li>
-        <li class="has-child {{ Request::is(app()->getLocale() . '/clinic/medical-records*') ? 'open' : '' }}">
-            <a href="#" class="{{ Request::is(app()->getLocale() . '/clinic/medical-records*') ? 'active' : '' }}">
-                <span class="nav-icon uil uil-file-medical-alt"></span>
-                <span class="menu-text">Rekam Medis</span>
-                <span class="toggle-icon"></span>
-            </a>
-            <ul>
-                <li><a class="{{ Request::is(app()->getLocale() . '/clinic/medical-records') ? 'active' : '' }}"
-                        href="{{ route('clinic.medical-records.index', app()->getLocale()) }}">Semua Rekam Medis</a>
-                </li>
-            </ul>
-        </li>
-        <li class="has-child {{ Request::is(app()->getLocale() . '/clinic/doctors*') ? 'open' : '' }}">
-            <a href="#" class="{{ Request::is(app()->getLocale() . '/clinic/doctors*') ? 'active' : '' }}">
-                <span class="nav-icon uil uil-user-md"></span>
-                <span class="menu-text">Dokter</span>
-                <span class="toggle-icon"></span>
-            </a>
-            <ul>
-                <li><a class="{{ Request::is(app()->getLocale() . '/clinic/doctors') ? 'active' : '' }}"
-                        href="{{ route('clinic.doctors.index', app()->getLocale()) }}">Daftar Dokter</a></li>
-                <li><a class="{{ Request::is(app()->getLocale() . '/clinic/doctors/create') ? 'active' : '' }}"
-                        href="{{ route('clinic.doctors.create', app()->getLocale()) }}">Tambah Dokter</a></li>
-            </ul>
-        </li>
+        @canany(['medical_records.view', 'medical_records.manage', 'doctors.view'])
+            <li class="menu-title mt-30">
+                <span>Tindakan Dokter</span>
+            </li>
+        @endcanany
+        @can('medical_records.manage')
+            <li>
+                <a href="{{ route('clinic.appointments.today', $locale) }}">
+                    <span class="nav-icon uil uil-stethoscope"></span>
+                    <span class="menu-text">Pasien Menunggu</span>
+                </a>
+            </li>
+        @endcan
+        @can('medical_records.view')
+            <li class="has-child {{ $is('medical-records*') ? 'open' : '' }}">
+                <a href="#" class="{{ $is('medical-records*') ? 'active' : '' }}">
+                    <span class="nav-icon uil uil-file-medical-alt"></span>
+                    <span class="menu-text">Rekam Medis</span>
+                    <span class="toggle-icon"></span>
+                </a>
+                <ul>
+                    <li><a class="{{ $is('medical-records') ? 'active' : '' }}"
+                            href="{{ route('clinic.medical-records.index', $locale) }}">Semua Rekam Medis</a></li>
+                </ul>
+            </li>
+        @endcan
+        @canany(['doctors.view', 'doctors.manage'])
+            <li class="has-child {{ $is('doctors*') ? 'open' : '' }}">
+                <a href="#" class="{{ $is('doctors*') ? 'active' : '' }}">
+                    <span class="nav-icon uil uil-user-md"></span>
+                    <span class="menu-text">Dokter</span>
+                    <span class="toggle-icon"></span>
+                </a>
+                <ul>
+                    @can('doctors.view')
+                        <li><a class="{{ $is('doctors') ? 'active' : '' }}"
+                                href="{{ route('clinic.doctors.index', $locale) }}">Daftar Dokter</a></li>
+                    @endcan
+                    @can('doctors.manage')
+                        <li><a class="{{ $is('doctors/create') ? 'active' : '' }}"
+                                href="{{ route('clinic.doctors.create', $locale) }}">Tambah Dokter</a></li>
+                    @endcan
+                </ul>
+            </li>
+        @endcanany
 
-        <li class="menu-title mt-30">
-            <span>Kasir</span>
-        </li>
-        <li>
-            <a href="{{ route('clinic.appointments.today', app()->getLocale()) }}"
-                class="{{ Request::is(app()->getLocale() . '/clinic/appointments/today') ? 'active' : '' }}">
-                <span class="nav-icon uil uil-bill"></span>
-                <span class="menu-text">Antrian Pembayaran</span>
-            </a>
-        </li>
-        <li class="has-child {{ Request::is(app()->getLocale() . '/clinic/payments*') ? 'open' : '' }}">
-            <a href="#" class="{{ Request::is(app()->getLocale() . '/clinic/payments*') ? 'active' : '' }}">
-                <span class="nav-icon uil uil-receipt"></span>
-                <span class="menu-text">Pembayaran</span>
-                <span class="toggle-icon"></span>
-            </a>
-            <ul>
-                <li><a class="{{ Request::is(app()->getLocale() . '/clinic/payments') ? 'active' : '' }}"
-                        href="{{ route('clinic.payments.index', app()->getLocale()) }}">Daftar Pembayaran</a></li>
-                <li><a class="{{ Request::is(app()->getLocale() . '/clinic/payments/report') ? 'active' : '' }}"
-                        href="{{ route('clinic.payments.report', app()->getLocale()) }}">Laporan Harian</a></li>
-            </ul>
-        </li>
-        <li class="has-child {{ Request::is(app()->getLocale() . '/clinic/reports*') ? 'open' : '' }}">
-            <a href="#" class="{{ Request::is(app()->getLocale() . '/clinic/reports*') ? 'active' : '' }}">
-                <span class="nav-icon uil uil-chart-bar"></span>
-                <span class="menu-text">Laporan Keuangan</span>
-                <span class="toggle-icon"></span>
-            </a>
-            <ul>
-                <li><a class="{{ Request::is(app()->getLocale() . '/clinic/reports/daily') ? 'active' : '' }}"
-                        href="{{ route('clinic.reports.daily', app()->getLocale()) }}">Pendapatan Harian</a></li>
-                <li><a class="{{ Request::is(app()->getLocale() . '/clinic/reports/monthly') ? 'active' : '' }}"
-                        href="{{ route('clinic.reports.monthly', app()->getLocale()) }}">Pendapatan Bulanan</a></li>
-                <li><a class="{{ Request::is(app()->getLocale() . '/clinic/reports/yearly') ? 'active' : '' }}"
-                        href="{{ route('clinic.reports.yearly', app()->getLocale()) }}">Pendapatan Tahunan</a></li>
-            </ul>
-        </li>
-        <li class="has-child {{ Request::is(app()->getLocale() . '/clinic/patient-reports*') ? 'open' : '' }}">
-            <a href="#" class="{{ Request::is(app()->getLocale() . '/clinic/patient-reports*') ? 'active' : '' }}">
-                <span class="nav-icon uil uil-chart-pie-alt"></span>
-                <span class="menu-text">Laporan Pasien</span>
-                <span class="toggle-icon"></span>
-            </a>
-            <ul>
-                <li><a class="{{ Request::is(app()->getLocale() . '/clinic/patient-reports/kb') ? 'active' : '' }}"
-                        href="{{ route('clinic.patient-reports.kb', app()->getLocale()) }}">Laporan KB</a></li>
-                <li><a class="{{ Request::is(app()->getLocale() . '/clinic/patient-reports/imunisasi') ? 'active' : '' }}"
-                        href="{{ route('clinic.patient-reports.imunisasi', app()->getLocale()) }}">Laporan Imunisasi</a>
-                </li>
-                <li><a class="{{ Request::is(app()->getLocale() . '/clinic/patient-reports/ibu-hamil') ? 'active' : '' }}"
-                        href="{{ route('clinic.patient-reports.ibu-hamil', app()->getLocale()) }}">Laporan Ibu Hamil</a>
-                </li>
-                <li><a class="{{ Request::is(app()->getLocale() . '/clinic/patient-reports/melahirkan') ? 'active' : '' }}"
-                        href="{{ route('clinic.patient-reports.melahirkan', app()->getLocale()) }}">Laporan
-                        Melahirkan</a></li>
-                <li><a class="{{ Request::is(app()->getLocale() . '/clinic/patient-reports/umum') ? 'active' : '' }}"
-                        href="{{ route('clinic.patient-reports.umum', app()->getLocale()) }}">Laporan Pasien Umum</a>
-                </li>
-            </ul>
-        </li>
+        @canany(['payments.view', 'payments.manage', 'reports.finance', 'reports.patients'])
+            <li class="menu-title mt-30">
+                <span>Kasir & Laporan</span>
+            </li>
+        @endcanany
+        @can('payments.manage')
+            <li>
+                <a href="{{ route('clinic.appointments.today', $locale) }}">
+                    <span class="nav-icon uil uil-bill"></span>
+                    <span class="menu-text">Antrian Pembayaran</span>
+                </a>
+            </li>
+        @endcan
+        @canany(['payments.view', 'reports.finance'])
+            <li class="has-child {{ $is('payments*') ? 'open' : '' }}">
+                <a href="#" class="{{ $is('payments*') ? 'active' : '' }}">
+                    <span class="nav-icon uil uil-receipt"></span>
+                    <span class="menu-text">Pembayaran</span>
+                    <span class="toggle-icon"></span>
+                </a>
+                <ul>
+                    @can('payments.view')
+                        <li><a class="{{ $is('payments') ? 'active' : '' }}"
+                                href="{{ route('clinic.payments.index', $locale) }}">Daftar Pembayaran</a></li>
+                    @endcan
+                    @can('reports.finance')
+                        <li><a class="{{ $is('payments/report') ? 'active' : '' }}"
+                                href="{{ route('clinic.payments.report', $locale) }}">Laporan Harian</a></li>
+                    @endcan
+                </ul>
+            </li>
+        @endcanany
+        @can('reports.finance')
+            <li class="has-child {{ $is('reports*') ? 'open' : '' }}">
+                <a href="#" class="{{ $is('reports*') ? 'active' : '' }}">
+                    <span class="nav-icon uil uil-chart-bar"></span>
+                    <span class="menu-text">Laporan Keuangan</span>
+                    <span class="toggle-icon"></span>
+                </a>
+                <ul>
+                    <li><a class="{{ $is('reports/daily') ? 'active' : '' }}"
+                            href="{{ route('clinic.reports.daily', $locale) }}">Pendapatan Harian</a></li>
+                    <li><a class="{{ $is('reports/monthly') ? 'active' : '' }}"
+                            href="{{ route('clinic.reports.monthly', $locale) }}">Pendapatan Bulanan</a></li>
+                    <li><a class="{{ $is('reports/yearly') ? 'active' : '' }}"
+                            href="{{ route('clinic.reports.yearly', $locale) }}">Pendapatan Tahunan</a></li>
+                </ul>
+            </li>
+        @endcan
+        @can('reports.patients')
+            <li class="has-child {{ $is('patient-reports*') ? 'open' : '' }}">
+                <a href="#" class="{{ $is('patient-reports*') ? 'active' : '' }}">
+                    <span class="nav-icon uil uil-chart-pie-alt"></span>
+                    <span class="menu-text">Laporan Pasien</span>
+                    <span class="toggle-icon"></span>
+                </a>
+                <ul>
+                    <li><a class="{{ $is('patient-reports/kb') ? 'active' : '' }}"
+                            href="{{ route('clinic.patient-reports.kb', $locale) }}">Laporan KB</a></li>
+                    <li><a class="{{ $is('patient-reports/imunisasi') ? 'active' : '' }}"
+                            href="{{ route('clinic.patient-reports.imunisasi', $locale) }}">Laporan Imunisasi</a></li>
+                    <li><a class="{{ $is('patient-reports/ibu-hamil') ? 'active' : '' }}"
+                            href="{{ route('clinic.patient-reports.ibu-hamil', $locale) }}">Laporan Ibu Hamil</a></li>
+                    <li><a class="{{ $is('patient-reports/melahirkan') ? 'active' : '' }}"
+                            href="{{ route('clinic.patient-reports.melahirkan', $locale) }}">Laporan Melahirkan</a></li>
+                    <li><a class="{{ $is('patient-reports/umum') ? 'active' : '' }}"
+                            href="{{ route('clinic.patient-reports.umum', $locale) }}">Laporan Pasien Umum</a></li>
+                </ul>
+            </li>
+        @endcan
 
-        <li class="menu-title mt-30">
-            <span>Master Data</span>
-        </li>
-        <li>
-            <a href="{{ route('clinic.services.index', app()->getLocale()) }}"
-                class="{{ Request::is(app()->getLocale() . '/clinic/services*') ? 'active' : '' }}">
-                <span class="nav-icon uil uil-medkit"></span>
-                <span class="menu-text">Layanan/Tindakan</span>
-            </a>
-        </li>
-        <li class="has-child {{ Request::is(app()->getLocale() . '/clinic/medicines*') ? 'open' : '' }}">
-            <a href="#" class="{{ Request::is(app()->getLocale() . '/clinic/medicines*') ? 'active' : '' }}">
-                <span class="nav-icon uil uil-capsule"></span>
-                <span class="menu-text">Obat</span>
-                <span class="toggle-icon"></span>
-            </a>
-            <ul>
-                <li><a class="{{ Request::is(app()->getLocale() . '/clinic/medicines') ? 'active' : '' }}"
-                        href="{{ route('clinic.medicines.index', app()->getLocale()) }}">Daftar Obat</a></li>
-                <li><a class="{{ Request::is(app()->getLocale() . '/clinic/medicines/create') ? 'active' : '' }}"
-                        href="{{ route('clinic.medicines.create', app()->getLocale()) }}">Tambah Obat</a></li>
-                <li><a class="{{ Request::is(app()->getLocale() . '/clinic/medicines/low-stock') ? 'active' : '' }}"
-                        href="{{ route('clinic.medicines.low-stock', app()->getLocale()) }}">Stok Rendah</a></li>
-            </ul>
-        </li>
+        @canany(['services.view', 'medicines.view', 'medicines.manage'])
+            <li class="menu-title mt-30">
+                <span>Master Data & Apotek</span>
+            </li>
+        @endcanany
+        @can('services.view')
+            <li>
+                <a href="{{ route('clinic.services.index', $locale) }}" class="{{ $is('services*') ? 'active' : '' }}">
+                    <span class="nav-icon uil uil-medkit"></span>
+                    <span class="menu-text">Layanan/Tindakan</span>
+                </a>
+            </li>
+        @endcan
+        @canany(['medicines.view', 'medicines.manage'])
+            <li class="has-child {{ $is('medicines*') ? 'open' : '' }}">
+                <a href="#" class="{{ $is('medicines*') ? 'active' : '' }}">
+                    <span class="nav-icon uil uil-capsule"></span>
+                    <span class="menu-text">Obat</span>
+                    <span class="toggle-icon"></span>
+                </a>
+                <ul>
+                    @can('medicines.view')
+                        <li><a class="{{ $is('medicines') ? 'active' : '' }}"
+                                href="{{ route('clinic.medicines.index', $locale) }}">Daftar Obat</a></li>
+                    @endcan
+                    @can('medicines.manage')
+                        <li><a class="{{ $is('medicines/create') ? 'active' : '' }}"
+                                href="{{ route('clinic.medicines.create', $locale) }}">Tambah Obat</a></li>
+                    @endcan
+                    @can('medicines.view')
+                        <li><a class="{{ $is('medicines/low-stock') ? 'active' : '' }}"
+                                href="{{ route('clinic.medicines.low-stock', $locale) }}">Stok Rendah</a></li>
+                    @endcan
+                </ul>
+            </li>
+        @endcanany
 
         <li class="menu-title mt-30">
             <span>Pengaturan</span>
         </li>
-        <li>
-            <a href="{{ route('clinic.settings.profile', app()->getLocale()) }}"
-                class="{{ Request::is(app()->getLocale() . '/clinic/settings/profile') ? 'active' : '' }}">
-                <span class="nav-icon uil uil-building"></span>
-                <span class="menu-text">Profil Klinik</span>
-            </a>
-        </li>
-        <li>
-            <a href="{{ route('clinic.users.index', app()->getLocale()) }}"
-                class="{{ Request::is(app()->getLocale() . '/clinic/users*') ? 'active' : '' }}">
-                <span class="nav-icon uil uil-users-alt"></span>
-                <span class="menu-text">Manajemen User</span>
-            </a>
-        </li>
-        <li>
-            <a href="{{ route('clinic.backup.index', app()->getLocale()) }}"
-                class="{{ Request::is(app()->getLocale() . '/clinic/backup*') ? 'active' : '' }}">
-                <span class="nav-icon uil uil-database"></span>
-                <span class="menu-text">Backup Database</span>
-            </a>
-        </li>
+        @can('settings.manage')
+            <li>
+                <a href="{{ route('clinic.settings.profile', $locale) }}" class="{{ $is('settings/profile') ? 'active' : '' }}">
+                    <span class="nav-icon uil uil-building"></span>
+                    <span class="menu-text">Profil Klinik</span>
+                </a>
+            </li>
+        @endcan
+        @can('users.manage')
+            <li>
+                <a href="{{ route('clinic.users.index', $locale) }}" class="{{ $is('users*') ? 'active' : '' }}">
+                    <span class="nav-icon uil uil-users-alt"></span>
+                    <span class="menu-text">Manajemen User</span>
+                </a>
+            </li>
+        @endcan
+        @can('roles.manage')
+            <li>
+                <a href="{{ route('clinic.roles.index', $locale) }}" class="{{ $is('roles*') ? 'active' : '' }}">
+                    <span class="nav-icon uil uil-shield-check"></span>
+                    <span class="menu-text">Manajemen Role</span>
+                </a>
+            </li>
+        @endcan
+        @can('backup.manage')
+            <li>
+                <a href="{{ route('clinic.backup.index', $locale) }}" class="{{ $is('backup*') ? 'active' : '' }}">
+                    <span class="nav-icon uil uil-database"></span>
+                    <span class="menu-text">Backup Database</span>
+                </a>
+            </li>
+        @endcan
         <li class="has-child">
             <a href="#">
                 <span class="nav-icon uil uil-window-section"></span>

@@ -288,6 +288,11 @@
                     <h4><i class="uil uil-users-alt me-2"></i>{{ $title }}</h4>
                     <p>Kelola semua pengguna sistem klinik</p>
                 </div>
+                @can('roles.manage')
+                    <a href="{{ route('clinic.roles.index', app()->getLocale()) }}" class="btn btn-light me-2">
+                        <i class="uil uil-shield-check me-1"></i>Kelola Role & Hak Akses
+                    </a>
+                @endcan
                 <a href="{{ route('clinic.users.create', app()->getLocale()) }}" class="btn btn-add-user">
                     <i class="uil uil-plus me-1"></i>Tambah User
                 </a>
@@ -355,19 +360,18 @@
                                     </div>
                                 </td>
                                 <td>
-                                    @switch($user->role ?? 'admin')
-                                        @case('admin')
-                                            <span class="badge-role admin"><i class="uil uil-shield me-1"></i>Administrator</span>
-                                            @break
-                                        @case('doctor')
-                                            <span class="badge-role doctor"><i class="uil uil-stethoscope me-1"></i>Dokter</span>
-                                            @break
-                                        @case('cashier')
-                                            <span class="badge-role cashier"><i class="uil uil-receipt me-1"></i>Kasir</span>
-                                            @break
-                                        @default
-                                            <span class="badge-role staff"><i class="uil uil-user me-1"></i>Staff</span>
-                                    @endswitch
+                                    @php
+                                        $badgeClass = match ($user->role) {
+                                            'admin' => 'admin', 'doctor' => 'doctor', 'cashier' => 'cashier', default => 'staff',
+                                        };
+                                        $badgeIcon = match ($user->role) {
+                                            'admin' => 'uil-shield', 'doctor' => 'uil-stethoscope', 'cashier' => 'uil-receipt', default => 'uil-user',
+                                        };
+                                    @endphp
+                                    <span class="badge-role {{ $badgeClass }}"><i class="uil {{ $badgeIcon }} me-1"></i>{{ $user->roleLabel() }}</span>
+                                    @unless($user->roleModel)
+                                        <div class="text-danger small mt-1">Role tidak ditemukan, user tidak punya akses menu</div>
+                                    @endunless
                                 </td>
                                 <td>
                                     @if($user->is_active ?? true)
@@ -390,7 +394,7 @@
                                         @if(auth()->id() !== $user->id)
                                             <form action="{{ route('clinic.users.destroy', [app()->getLocale(), $user->id]) }}"
                                                 method="POST" class="d-inline"
-                                                onsubmit="return confirm('Yakin ingin menghapus user {{ $user->name }}?')">
+                                                onsubmit="return confirm(@js('Yakin ingin menghapus user ' . $user->name . '?'))">
                                                 @csrf
                                                 @method('DELETE')
                                                 <button type="submit" class="action-btn delete" title="Hapus User">

@@ -36,26 +36,13 @@ class RouteServiceProvider extends ServiceProvider
             Route::middleware('web')
                 ->group(base_path('routes/web.php'));
 
-            Route::middleware('web')
-                ->group(base_path('routes/dashboard.php'));
-
-            Route::middleware('web')
-                ->group(base_path('routes/changelog.php'));
-
-            Route::middleware('web')
-                ->group(base_path('routes/application.php'));
-
-            Route::middleware('web')
-                ->group(base_path('routes/uielement.php'));
-
-            Route::middleware('web')
-                ->group(base_path('routes/feature.php'));
-
-            Route::middleware('web')
-                ->group(base_path('routes/pages.php'));
-
-            Route::middleware('web')
-                ->group(base_path('routes/customer.php'));
+            // HexaDash template demo pages (chat, ecommerce, customer CRUD, ...).
+            // They stay registered because the template's top navigation links to them,
+            // but nobody can open them: "template.demo" is not granted to any role.
+            foreach (['dashboard', 'changelog', 'application', 'uielement', 'feature', 'pages', 'customer'] as $demoRoutes) {
+                Route::middleware(['web', 'auth', 'permission:template.demo'])
+                    ->group(base_path("routes/{$demoRoutes}.php"));
+            }
 
             Route::middleware('web')
                 ->group(base_path('routes/clinic.php'));

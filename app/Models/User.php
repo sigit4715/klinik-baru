@@ -17,12 +17,14 @@ class User extends Authenticatable
      *
      * @var array<int, string>
      */
+    /**
+     * role and is_active are intentionally not mass assignable;
+     * set them explicitly after an authorization check.
+     */
     protected $fillable = [
         'name',
         'email',
         'password',
-        'role',
-        'is_active',
         'google_id',
         'avatar',
     ];
@@ -46,4 +48,32 @@ class User extends Authenticatable
         'email_verified_at' => 'datetime',
         'is_active' => 'boolean',
     ];
+
+    /**
+     * users.role stores the role name (e.g. "admin", "cashier").
+     */
+    public function roleModel()
+    {
+        return $this->belongsTo(Role::class, 'role', 'name');
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return (bool) $this->roleModel?->is_system;
+    }
+
+    public function hasPermission(string $permission): bool
+    {
+        return (bool) $this->roleModel?->hasPermission($permission);
+    }
+
+    public function permissions(): array
+    {
+        return $this->roleModel?->effectivePermissions() ?? [];
+    }
+
+    public function roleLabel(): string
+    {
+        return $this->roleModel?->label ?? ucfirst((string) $this->role);
+    }
 }

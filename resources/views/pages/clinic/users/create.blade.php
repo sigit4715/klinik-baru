@@ -43,12 +43,15 @@
                                 <label class="form-label">Role <span class="text-danger">*</span></label>
                                 <select name="role" class="form-select @error('role') is-invalid @enderror" required>
                                     <option value="">-- Pilih Role --</option>
-                                    @foreach($roles as $value => $label)
+                                    @foreach($roles as $value => $roleOption)
                                         <option value="{{ $value }}" {{ old('role') == $value ? 'selected' : '' }}>
-                                            {{ $label }}
+                                            {{ $roleOption->label }}
                                         </option>
                                     @endforeach
                                 </select>
+                                @can('roles.manage')
+                                    <small class="text-muted">Atur hak akses tiap role di <a href="{{ route('clinic.roles.index', app()->getLocale()) }}">Manajemen Role</a>.</small>
+                                @endcan
                                 @error('role')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -57,11 +60,11 @@
                             <div class="mb-3">
                                 <label class="form-label">Password <span class="text-danger">*</span></label>
                                 <input type="password" name="password"
-                                    class="form-control @error('password') is-invalid @enderror" required minlength="6">
+                                    class="form-control @error('password') is-invalid @enderror" required minlength="8">
                                 @error('password')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
-                                <small class="text-muted">Minimal 6 karakter</small>
+                                <small class="text-muted">Minimal 8 karakter</small>
                             </div>
 
                             <div class="mb-3">

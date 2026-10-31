@@ -34,6 +34,9 @@ class DoctorController extends Controller
             'specialization' => 'required|string|max:100',
             'phone' => 'required|string|max:20',
             'email' => 'required|email|unique:doctors',
+            // Images only; blocks uploading scripts (e.g. .php) into public storage
+            'photo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'status' => 'nullable|in:active,inactive',
         ]);
 
         if ($validators->fails()) {
@@ -91,6 +94,9 @@ class DoctorController extends Controller
             'specialization' => 'required|string|max:100',
             'phone' => 'required|string|max:20',
             'email' => 'required|email|unique:doctors,email,' . $id,
+            // Images only; blocks uploading scripts (e.g. .php) into public storage
+            'photo' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048',
+            'status' => 'nullable|in:active,inactive',
         ]);
 
         if ($validators->fails()) {

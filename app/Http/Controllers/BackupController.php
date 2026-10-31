@@ -112,9 +112,26 @@ class BackupController extends Controller
                 ->with('success', "Backup berhasil dibuat: $filename");
 
         } catch (\Exception $e) {
+            report($e);
+
             return redirect()->route('clinic.backup.index', app()->getLocale())
-                ->with('error', 'Gagal membuat backup: ' . $e->getMessage());
+                ->with('error', 'Gagal membuat backup. Detail error tersimpan di log aplikasi.');
         }
+    }
+
+    /**
+     * Resolve a backup file name to a path inside storage/app/backups only.
+     * Rejects anything that is not a plain "backup_*.sql" name (no ../ or ..\ tricks).
+     */
+    private function backupPath(string $filename): ?string
+    {
+        if (! preg_match('/^backup_[0-9A-Za-z_\-]+\.sql$/', $filename)) {
+            return null;
+        }
+
+        $path = storage_path('app/backups/' . $filename);
+
+        return is_file($path) ? $path : null;
     }
 
     /**
@@ -122,9 +139,9 @@ class BackupController extends Controller
      */
     public function download($language, $filename)
     {
-        $filePath = storage_path('app/backups/' . $filename);
+        $filePath = $this->backupPath($filename);
 
-        if (file_exists($filePath)) {
+        if ($filePath) {
             return response()->download($filePath);
         }
 
@@ -137,9 +154,9 @@ class BackupController extends Controller
      */
     public function destroy($language, $filename)
     {
-        $filePath = storage_path('app/backups/' . $filename);
+        $filePath = $this->backupPath($filename);
 
-        if (file_exists($filePath)) {
+        if ($filePath) {
             unlink($filePath);
             return redirect()->route('clinic.backup.index', app()->getLocale())
                 ->with('success', 'Backup berhasil dihapus');
