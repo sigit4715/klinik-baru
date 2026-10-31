@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Validator;
 use App\Models\Payment;
 use App\Models\Appointment;
@@ -88,38 +90,101 @@ class PaymentController extends Controller
     {
         $validators = Validator::make($request->all(), [
             'appointment_id' => 'required|exists:appointments,id',
-            'patient_id' => 'required|exists:patients,id',
-            'subtotal' => 'required|numeric|min:0',
-            'total' => 'required|numeric|min:0',
             'payment_method' => 'required|in:cash,debit,credit,transfer,bpjs',
+            'items' => 'required|array|min:1',
+            'items.*.type' => 'required|in:medicine,service',
+            'items.*.id' => 'required|integer',
+            'items.*.qty' => 'required|integer|min:1|max:10000',
+            'discount' => 'nullable|numeric|min:0',
+            'cash_received' => 'nullable|numeric|min:0',
+        ], [
+            'items.required' => 'Tidak ada item pembayaran.',
+            'items.min' => 'Tidak ada item pembayaran.',
         ]);
 
         if ($validators->fails()) {
             return redirect()->back()->withErrors($validators)->withInput();
         }
 
-        // Process items to ensure subtotal is calculated correctly
-        $items = $request->items ?? [];
-        foreach ($items as $key => $item) {
-            $qty = floatval($item['qty'] ?? 1);
-            $price = floatval($item['price'] ?? 0);
-            $items[$key]['subtotal'] = $qty * $price;
-        }
+        try {
+            $payment = DB::transaction(function () use ($request) {
+                // Lock the appointment so the same visit cannot be paid twice concurrently
+                $appointment = Appointment::lockForUpdate()->findOrFail($request->appointment_id);
 
-        $payment = new Payment();
-        $payment->invoice_number = Payment::generateInvoiceNumber();
-        $payment->appointment_id = $request->appointment_id;
-        $payment->patient_id = $request->patient_id;
-        $payment->subtotal = $request->subtotal;
-        $payment->discount = $request->discount ?? 0;
-        $payment->tax = $request->tax ?? 0;
-        $payment->total = $request->total;
-        $payment->cash_received = $request->cash_received ?? 0;
-        $payment->change_amount = max(0, ($request->cash_received ?? 0) - $request->total);
-        $payment->payment_method = $request->payment_method;
-        $payment->status = 'paid';
-        $payment->items = $items;
-        $payment->save();
+                if ($appointment->status === 'cancelled') {
+                    throw ValidationException::withMessages(['appointment_id' => 'Antrian ini sudah dibatalkan.']);
+                }
+
+                $alreadyPaid = Payment::where('appointment_id', $appointment->id)
+                    ->where('status', '!=', 'cancelled')
+                    ->exists();
+                if ($alreadyPaid) {
+                    throw ValidationException::withMessages(['appointment_id' => 'Antrian ini sudah memiliki pembayaran.']);
+                }
+
+                // Rebuild items with prices from the database; client prices are ignored
+                $items = [];
+                $subtotal = 0;
+                foreach ($request->input('items', []) as $item) {
+                    $model = $item['type'] === 'medicine'
+                        ? Medicine::find($item['id'])
+                        : Service::find($item['id']);
+
+                    if (! $model) {
+                        throw ValidationException::withMessages(['items' => 'Item pembayaran tidak ditemukan.']);
+                    }
+
+                    $qty = (int) $item['qty'];
+                    $price = (float) ($item['type'] === 'medicine' ? $model->sell_price : $model->price);
+                    $lineTotal = round($qty * $price, 2);
+                    $subtotal += $lineTotal;
+
+                    $items[] = [
+                        'type' => $item['type'],
+                        'id' => $model->id,
+                        'name' => $model->name,
+                        'qty' => $qty,
+                        'price' => $price,
+                        'subtotal' => $lineTotal,
+                    ];
+                }
+
+                $discount = round((float) $request->input('discount', 0), 2);
+                if ($discount > $subtotal) {
+                    throw ValidationException::withMessages(['discount' => 'Diskon tidak boleh melebihi subtotal.']);
+                }
+
+                $tax = 0;
+                $total = round($subtotal - $discount + $tax, 2);
+
+                if ($request->payment_method === 'cash') {
+                    $cashReceived = round((float) $request->input('cash_received', 0), 2);
+                    if ($cashReceived < $total) {
+                        throw ValidationException::withMessages(['cash_received' => 'Uang yang diterima kurang dari total pembayaran.']);
+                    }
+                } else {
+                    $cashReceived = $total;
+                }
+
+                $payment = new Payment();
+                $payment->appointment_id = $appointment->id;
+                $payment->patient_id = $appointment->patient_id;
+                $payment->subtotal = $subtotal;
+                $payment->discount = $discount;
+                $payment->tax = $tax;
+                $payment->total = $total;
+                $payment->cash_received = $cashReceived;
+                $payment->change_amount = round($cashReceived - $total, 2);
+                $payment->payment_method = $request->payment_method;
+                $payment->status = 'paid';
+                $payment->items = $items;
+                $payment->saveWithUniqueInvoiceNumber();
+
+                return $payment;
+            });
+        } catch (ValidationException $e) {
+            return redirect()->back()->withErrors($e->errors())->withInput();
+        }
 
         return redirect()->route('clinic.payments.show', [app()->getLocale(), $payment->id])
             ->with('success', 'Pembayaran berhasil disimpan!');
@@ -143,7 +208,25 @@ class PaymentController extends Controller
 
     public function updateStatus(Request $request, $language, $id)
     {
+        $request->validate([
+            'status' => 'required|in:' . implode(',', Payment::STATUSES),
+        ]);
+
         $payment = Payment::findOrFail($id);
+
+        // pending -> paid/cancelled, paid -> cancelled (void). Cancelled is final.
+        $allowed = [
+            'pending' => ['paid', 'cancelled'],
+            'paid' => ['cancelled'],
+            'cancelled' => [],
+        ];
+        if (! in_array($request->status, $allowed[$payment->status] ?? [], true)) {
+            return response()->json([
+                'success' => false,
+                'message' => "Status pembayaran tidak bisa diubah dari {$payment->status} ke {$request->status}.",
+            ], 422);
+        }
+
         $payment->status = $request->status;
         $payment->save();
 
@@ -153,6 +236,12 @@ class PaymentController extends Controller
     public function destroy($language, $id)
     {
         $payment = Payment::findOrFail($id);
+
+        if ($payment->status === 'paid') {
+            return redirect()->back()
+                ->with('error', 'Pembayaran yang sudah lunas tidak bisa dihapus. Batalkan pembayaran terlebih dahulu.');
+        }
+
         $payment->delete();
         return redirect()->route('clinic.payments.index', app()->getLocale())
             ->with('success', 'Pembayaran berhasil dihapus!');
@@ -160,8 +249,14 @@ class PaymentController extends Controller
 
     public function report(Request $request)
     {
-        $startDate = $request->start_date ?? today()->startOfMonth();
-        $endDate = $request->end_date ?? today();
+        $request->validate([
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
+        ]);
+
+        $startDate = $request->start_date ? \Carbon\Carbon::parse($request->start_date)->startOfDay() : today()->startOfMonth();
+        // Include the whole last day (today() alone is 00:00 and would drop it)
+        $endDate = $request->end_date ? \Carbon\Carbon::parse($request->end_date)->endOfDay() : today()->endOfDay();
 
         $payments = Payment::with(['patient'])
             ->whereBetween('created_at', [$startDate, $endDate])

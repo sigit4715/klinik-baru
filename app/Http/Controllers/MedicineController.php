@@ -67,6 +67,9 @@ class MedicineController extends Controller
             'stock' => 'required|integer|min:0',
             'buy_price' => 'required|numeric|min:0',
             'sell_price' => 'required|numeric|min:0',
+            'min_stock' => 'nullable|integer|min:0',
+            'expired_date' => 'nullable|date',
+            'status' => 'nullable|in:active,inactive',
         ]);
 
         if ($validators->fails()) {
@@ -111,6 +114,9 @@ class MedicineController extends Controller
             'stock' => 'required|integer|min:0',
             'buy_price' => 'required|numeric|min:0',
             'sell_price' => 'required|numeric|min:0',
+            'min_stock' => 'nullable|integer|min:0',
+            'expired_date' => 'nullable|date',
+            'status' => 'nullable|in:active,inactive',
         ]);
 
         if ($validators->fails()) {
@@ -158,8 +164,10 @@ class MedicineController extends Controller
 
     public function updateStock(Request $request, $language, $id)
     {
+        $request->validate(['stock' => 'required|integer|min:0|max:1000000']);
+
         $medicine = Medicine::findOrFail($id);
-        $medicine->stock = $request->stock;
+        $medicine->stock = (int) $request->stock;
         $medicine->save();
         return response()->json(['success' => true, 'stock' => $medicine->stock]);
     }

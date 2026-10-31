@@ -19,6 +19,14 @@
             </aside>
         </div>
         <div class="contents">
+            @if(session('error'))
+                <div class="container-fluid">
+                    <div class="alert alert-danger alert-dismissible fade show mt-3" role="alert">
+                        <i class="uil uil-exclamation-triangle me-2"></i>{{ session('error') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                </div>
+            @endif
             @yield('content')
         </div>
         <footer class="footer-wrapper">

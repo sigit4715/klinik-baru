@@ -467,8 +467,9 @@
                                             value="{{ $item['qty'] }}" min="1" data-index="{{ $i }}">
                                     </td>
                                     <td>
-                                        <input type="number" name="items[{{ $i }}][price]" class="input-price item-price"
-                                            value="{{ $item['price'] }}" min="0" data-index="{{ $i }}">
+                                        <input type="number" class="input-price item-price"
+                                            value="{{ $item['price'] }}" min="0" data-index="{{ $i }}" readonly
+                                            title="Harga mengikuti master obat/layanan">
                                     </td>
                                     <td class="subtotal-cell item-subtotal" data-index="{{ $i }}">
                                         Rp {{ number_format($item['subtotal'], 0, ',', '.') }}
@@ -661,7 +662,7 @@
             const paymentMethod = document.querySelector('[name="payment_method"]').value;
 
             // Only validate cash received for cash payment method
-            if (paymentMethod === 'cash' && cashReceived > 0 && cashReceived < total) {
+            if (paymentMethod === 'cash' && cashReceived < total) {
                 e.preventDefault();
                 alert('Uang yang diterima kurang dari total pembayaran!');
                 document.getElementById('cashReceived').focus();

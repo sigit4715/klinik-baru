@@ -70,6 +70,11 @@
                 <div class="card">
                     <div class="card-header"><i class="uil uil-stethoscope me-2"></i>Form Pemeriksaan</div>
                     <div class="card-body">
+                        @if($errors->any())
+                            <div class="alert alert-danger" role="alert">
+                                <ul class="mb-0">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul>
+                            </div>
+                        @endif
                         <form action="{{ route('clinic.medical-records.store', app()->getLocale()) }}" method="POST">
                             @csrf
                             <input type="hidden" name="appointment_id" value="{{ $appointment->id }}">

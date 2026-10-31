@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Validator;
 use App\Models\MedicalRecord;
 use App\Models\Appointment;
@@ -72,7 +74,12 @@ class MedicalRecordController extends Controller
             $doctor = $appointment->doctor;
         }
 
-        $medicines = Medicine::active()->where('stock', '>', 0)->get();
+        $medicines = Medicine::active()
+            ->where('stock', '>', 0)
+            ->where(function ($q) {
+                $q->whereNull('expired_date')->orWhereDate('expired_date', '>=', today());
+            })
+            ->get();
         $services = Service::active()->get();
 
         return view('pages.clinic.medical-records.create', compact(
@@ -90,66 +97,124 @@ class MedicalRecordController extends Controller
     {
         $validators = Validator::make($request->all(), [
             'appointment_id' => 'required|exists:appointments,id',
+            'anamnesa' => 'nullable|string',
             'diagnosis' => 'required|string',
+            'treatment' => 'nullable|string',
+            'notes' => 'nullable|string',
+            'blood_pressure' => ['nullable', 'string', 'max:20', 'regex:/^\d{2,3}\/\d{2,3}$/'],
+            'body_temperature' => 'nullable|numeric|between:30,45',
+            'pulse_rate' => 'nullable|integer|between:20,250',
+            'respiratory_rate' => 'nullable|integer|between:5,80',
+            'height' => 'nullable|numeric|between:20,250',
+            'weight' => 'nullable|numeric|between:0.5,400',
+            'prescriptions' => 'nullable|array',
+            'prescriptions.*.medicine_id' => 'nullable|integer|exists:medicines,id',
+            'prescriptions.*.qty' => 'nullable|integer|min:1|max:10000',
+            'prescriptions.*.dosage' => 'nullable|string|max:255',
+            'prescriptions.*.notes' => 'nullable|string|max:255',
+            'services_used' => 'nullable|array',
+            'services_used.*.service_id' => 'nullable|integer|exists:services,id',
+            'services_used.*.qty' => 'nullable|integer|min:1|max:1000',
+        ], [
+            'blood_pressure.regex' => 'Format tekanan darah harus seperti 120/80.',
         ]);
 
         if ($validators->fails()) {
             return redirect()->back()->withErrors($validators)->withInput();
         }
 
-        $appointment = Appointment::findOrFail($request->appointment_id);
+        try {
+            $record = DB::transaction(function () use ($request) {
+                // Lock the appointment row so a double submit cannot create two records
+                $appointment = Appointment::lockForUpdate()->findOrFail($request->appointment_id);
 
-        $record = new MedicalRecord();
-        $record->appointment_id = $request->appointment_id;
-        $record->patient_id = $appointment->patient_id;
-        $record->doctor_id = $appointment->doctor_id;
-        $record->anamnesa = $request->anamnesa;
-        $record->diagnosis = $request->diagnosis;
-        $record->treatment = $request->treatment;
-        $record->notes = $request->notes;
+                if ($appointment->status === 'cancelled') {
+                    throw ValidationException::withMessages([
+                        'appointment_id' => 'Antrian ini sudah dibatalkan, rekam medis tidak bisa dibuat.',
+                    ]);
+                }
 
-        // Process prescriptions
-        if ($request->has('prescriptions')) {
-            $prescriptions = [];
-            foreach ($request->prescriptions as $prescription) {
-                if (!empty($prescription['medicine_id'])) {
+                if (MedicalRecord::where('appointment_id', $appointment->id)->exists()) {
+                    throw ValidationException::withMessages([
+                        'appointment_id' => 'Rekam medis untuk antrian ini sudah ada.',
+                    ]);
+                }
+
+                $record = new MedicalRecord();
+                $record->appointment_id = $appointment->id;
+                $record->patient_id = $appointment->patient_id;
+                $record->doctor_id = $appointment->doctor_id;
+                $record->anamnesa = $request->anamnesa;
+                $record->diagnosis = $request->diagnosis;
+                $record->blood_pressure = $request->blood_pressure;
+                $record->body_temperature = $request->body_temperature;
+                $record->pulse_rate = $request->pulse_rate;
+                $record->respiratory_rate = $request->respiratory_rate;
+                $record->height = $request->height;
+                $record->weight = $request->weight;
+                $record->treatment = $request->treatment;
+                $record->notes = $request->notes;
+
+                // Prescriptions: merge duplicate lines, then check and reduce stock under a row lock
+                $prescriptions = [];
+                foreach ($request->input('prescriptions', []) as $prescription) {
+                    if (empty($prescription['medicine_id'])) {
+                        continue;
+                    }
                     $prescriptions[] = [
-                        'medicine_id' => $prescription['medicine_id'],
-                        'qty' => $prescription['qty'] ?? 1,
+                        'medicine_id' => (int) $prescription['medicine_id'],
+                        'qty' => (int) ($prescription['qty'] ?? 1),
                         'dosage' => $prescription['dosage'] ?? '',
                         'notes' => $prescription['notes'] ?? '',
                     ];
+                }
 
-                    // Reduce medicine stock
-                    $medicine = Medicine::find($prescription['medicine_id']);
-                    if ($medicine) {
-                        $medicine->stock -= ($prescription['qty'] ?? 1);
-                        $medicine->save();
+                $qtyPerMedicine = [];
+                foreach ($prescriptions as $prescription) {
+                    $qtyPerMedicine[$prescription['medicine_id']] = ($qtyPerMedicine[$prescription['medicine_id']] ?? 0) + $prescription['qty'];
+                }
+
+                $medicines = Medicine::whereIn('id', array_keys($qtyPerMedicine))->lockForUpdate()->get()->keyBy('id');
+                foreach ($qtyPerMedicine as $medicineId => $qty) {
+                    $medicine = $medicines[$medicineId];
+
+                    if ($medicine->status !== 'active') {
+                        throw ValidationException::withMessages(['prescriptions' => "Obat {$medicine->name} tidak aktif."]);
+                    }
+                    if ($medicine->expired_date && $medicine->expired_date->lt(today())) {
+                        throw ValidationException::withMessages(['prescriptions' => "Obat {$medicine->name} sudah kedaluwarsa."]);
+                    }
+                    if ($medicine->stock < $qty) {
+                        throw ValidationException::withMessages([
+                            'prescriptions' => "Stok {$medicine->name} tidak cukup (tersedia {$medicine->stock}, diminta {$qty}).",
+                        ]);
+                    }
+
+                    $medicine->decrement('stock', $qty);
+                }
+                $record->prescriptions = $prescriptions;
+
+                $servicesUsed = [];
+                foreach ($request->input('services_used', []) as $serviceUsed) {
+                    if (!empty($serviceUsed['service_id'])) {
+                        $servicesUsed[] = [
+                            'service_id' => (int) $serviceUsed['service_id'],
+                            'qty' => (int) ($serviceUsed['qty'] ?? 1),
+                        ];
                     }
                 }
-            }
-            $record->prescriptions = $prescriptions;
+                $record->services_used = $servicesUsed;
+
+                $record->save();
+
+                $appointment->status = 'completed';
+                $appointment->save();
+
+                return $record;
+            });
+        } catch (ValidationException $e) {
+            return redirect()->back()->withErrors($e->errors())->withInput();
         }
-
-        // Process services used
-        if ($request->has('services_used')) {
-            $servicesUsed = [];
-            foreach ($request->services_used as $serviceUsed) {
-                if (!empty($serviceUsed['service_id'])) {
-                    $servicesUsed[] = [
-                        'service_id' => $serviceUsed['service_id'],
-                        'qty' => $serviceUsed['qty'] ?? 1,
-                    ];
-                }
-            }
-            $record->services_used = $servicesUsed;
-        }
-
-        $record->save();
-
-        // Update appointment status
-        $appointment->status = 'completed';
-        $appointment->save();
 
         return redirect()->route('clinic.medical-records.show', [app()->getLocale(), $record->id])
             ->with('success', 'Rekam medis berhasil disimpan!');

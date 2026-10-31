@@ -72,6 +72,12 @@
                     target="_blank">
                     <i class="uil uil-tv-retro me-1"></i>Buka Display TV
                 </a>
+                <select id="callDoctor" class="form-select" style="width: auto;" title="Panggil antrian untuk dokter">
+                    <option value="">Semua dokter</option>
+                    @foreach($doctors as $doctor)
+                        <option value="{{ $doctor->id }}">{{ $doctor->name }}</option>
+                    @endforeach
+                </select>
                 <button type="button" class="btn btn-call-next" id="btnCallNext">
                     <i class="uil uil-megaphone me-1"></i>Panggil Antrian Berikutnya
                 </button>
@@ -229,7 +235,8 @@
                 this.disabled = true;
                 this.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Memanggil...';
 
-                const success = await QueueVoice.callNext(callNextUrl, csrfToken);
+                const doctorId = document.getElementById('callDoctor').value || null;
+                const success = await QueueVoice.callNext(callNextUrl, csrfToken, doctorId);
 
                 if (success) {
                     btnRepeat.style.display = 'inline-block';

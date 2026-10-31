@@ -53,4 +53,24 @@ class Patient extends Model
         $nextNumber = $lastPatient ? intval(substr($lastPatient->no_rm, 3)) + 1 : 1;
         return 'RM-' . str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
     }
+
+    /**
+     * Save with a fresh medical record number, retrying if two registrations collide.
+     * no_rm has a unique index.
+     */
+    public function saveWithUniqueNoRM(int $attempts = 5): void
+    {
+        for ($i = 1; ; $i++) {
+            $this->no_rm = self::generateNoRM();
+            try {
+                $this->save();
+                return;
+            } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
+                // NIK is unique too; only retry when the collision is on no_rm
+                if ($i >= $attempts || ! str_contains($e->getMessage(), 'no_rm')) {
+                    throw $e;
+                }
+            }
+        }
+    }
 }

@@ -59,7 +59,7 @@ class PatientController extends Controller
             'name' => 'required|string|max:255',
             'nik' => 'required|string|size:16|unique:patients',
             'gender' => 'required|in:L,P',
-            'birth_date' => 'required|date',
+            'birth_date' => 'required|date|before_or_equal:today',
             'birth_place' => 'required|string|max:100',
             'phone' => 'nullable|string|max:20',
             'address' => 'required|string',
@@ -73,7 +73,6 @@ class PatientController extends Controller
         }
 
         $patient = new Patient();
-        $patient->no_rm = Patient::generateNoRM();
         $patient->name = $request->name;
         $patient->nik = $request->nik;
         $patient->gender = $request->gender;
@@ -86,7 +85,7 @@ class PatientController extends Controller
         $patient->allergy = $request->allergy;
         $patient->emergency_contact = $request->emergency_contact;
         $patient->emergency_phone = $request->emergency_phone;
-        $patient->save();
+        $patient->saveWithUniqueNoRM();
 
         return redirect()->route('clinic.patients.index', app()->getLocale())
             ->with('success', 'Pasien berhasil ditambahkan!');
@@ -116,12 +115,12 @@ class PatientController extends Controller
             'name' => 'required|string|max:255',
             'nik' => 'required|string|size:16|unique:patients,nik,' . $id,
             'gender' => 'required|in:L,P',
-            'birth_date' => 'required|date',
+            'birth_date' => 'required|date|before_or_equal:today',
             'birth_place' => 'required|string|max:100',
-            'phone' => 'required|string|max:20',
+            'phone' => 'nullable|string|max:20',
             'address' => 'required|string',
-            'emergency_contact' => 'required|string|max:100',
-            'emergency_phone' => 'required|string|max:20',
+            'emergency_contact' => 'nullable|string|max:100',
+            'emergency_phone' => 'nullable|string|max:20',
         ]);
 
         if ($validators->fails()) {
@@ -151,6 +150,13 @@ class PatientController extends Controller
     public function destroy($language, $id)
     {
         $patient = Patient::findOrFail($id);
+
+        // Deleting would erase medical and payment history, so only allow it for patients without visits
+        if ($patient->appointments()->exists()) {
+            return redirect()->route('clinic.patients.index', app()->getLocale())
+                ->with('error', "Pasien {$patient->name} sudah memiliki riwayat kunjungan sehingga tidak bisa dihapus.");
+        }
+
         $patient->delete();
         return redirect()->route('clinic.patients.index', app()->getLocale())
             ->with('success', 'Pasien berhasil dihapus!');

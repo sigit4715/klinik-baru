@@ -21,13 +21,6 @@
             </div>
         @endif
 
-        @if(session('error'))
-            <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                <i class="uil uil-exclamation-triangle me-2"></i>{{ session('error') }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        @endif
-
         <div class="card">
             <div class="card-header">
                 <h6 class="mb-0"><i class="uil uil-history me-2"></i>Daftar Backup</h6>

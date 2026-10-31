@@ -128,6 +128,13 @@ class DoctorController extends Controller
     public function destroy($language, $id)
     {
         $doctor = Doctor::findOrFail($id);
+
+        // Deleting would erase all visits, medical records and revenue of this doctor
+        if ($doctor->appointments()->exists()) {
+            return redirect()->route('clinic.doctors.index', app()->getLocale())
+                ->with('error', "Dokter {$doctor->name} sudah memiliki riwayat pasien. Ubah status menjadi tidak aktif sebagai pengganti hapus.");
+        }
+
         if ($doctor->photo) {
             Storage::disk('public')->delete($doctor->photo);
         }

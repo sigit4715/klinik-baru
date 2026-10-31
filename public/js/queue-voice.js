@@ -194,7 +194,7 @@ const QueueVoice = {
     /**
      * Panggil antrian berikutnya via API
      */
-    callNext: async function (url, csrfToken) {
+    callNext: async function (url, csrfToken, doctorId = null) {
         try {
             const response = await fetch(url, {
                 method: 'POST',
@@ -202,7 +202,9 @@ const QueueVoice = {
                     'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': csrfToken,
                     'Accept': 'application/json'
-                }
+                },
+                // Optional: only call the next patient of one doctor
+                body: JSON.stringify(doctorId ? { doctor_id: doctorId } : {})
             });
 
             const data = await response.json();

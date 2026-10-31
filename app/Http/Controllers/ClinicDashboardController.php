@@ -32,8 +32,9 @@ class ClinicDashboardController extends Controller
         $startOfMonth = $today->copy()->startOfMonth();
 
         $todayRevenue = Payment::whereDate('created_at', $today)->paid()->sum('total');
-        $weekRevenue = Payment::whereBetween('created_at', [$startOfWeek, $today])->paid()->sum('total');
-        $monthRevenue = Payment::whereBetween('created_at', [$startOfMonth, $today])->paid()->sum('total');
+        // endOfDay so today's payments are counted (today() alone is 00:00)
+        $weekRevenue = Payment::whereBetween('created_at', [$startOfWeek, $today->copy()->endOfDay()])->paid()->sum('total');
+        $monthRevenue = Payment::whereBetween('created_at', [$startOfMonth, $today->copy()->endOfDay()])->paid()->sum('total');
 
         // Alerts
         $lowStockMedicines = Medicine::lowStock()->count();
