@@ -282,6 +282,40 @@
             </li>
         @endcan
 
+        @canany(['payroll.self', 'payroll.manage'])
+            <li class="menu-title mt-30">
+                <span>Penggajian</span>
+            </li>
+        @endcanany
+        @can('payroll.manage')
+            <li>
+                <a href="{{ route('clinic.payroll.index', $locale) }}" class="{{ $is('payroll*') || $is('payslips*') ? 'active' : '' }}">
+                    <span class="nav-icon uil uil-money-bill"></span>
+                    <span class="menu-text">Penggajian</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('clinic.salary-profiles.index', $locale) }}" class="{{ $is('salary-profiles*') ? 'active' : '' }}">
+                    <span class="nav-icon uil uil-setting"></span>
+                    <span class="menu-text">Pengaturan Gaji</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('clinic.service-fees.index', $locale) }}" class="{{ $is('service-fees*') ? 'active' : '' }}">
+                    <span class="nav-icon uil uil-medkit"></span>
+                    <span class="menu-text">Tarif Fee Tindakan</span>
+                </a>
+            </li>
+        @endcan
+        @can('payroll.self')
+            <li>
+                <a href="{{ route('clinic.payroll.mine', $locale) }}" class="{{ $is('my-payslips') ? 'active' : '' }}">
+                    <span class="nav-icon uil uil-receipt-alt"></span>
+                    <span class="menu-text">Slip Gaji Saya</span>
+                </a>
+            </li>
+        @endcan
+
         <li class="menu-title mt-30">
             <span>Pengaturan</span>
         </li>

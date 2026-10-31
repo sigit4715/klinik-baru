@@ -107,7 +107,13 @@ class User extends Authenticatable
             || NursingAssessment::where('nurse_id', $this->id)->exists()
             || Payment::where('cashier_id', $this->id)->exists()
             || MedicalRecord::where('edited_by', $this->id)->exists()
-            || Attendance::where('user_id', $this->id)->exists();
+            || Attendance::where('user_id', $this->id)->exists()
+            || Payslip::where('user_id', $this->id)->exists();
+    }
+
+    public function salaryProfile()
+    {
+        return $this->hasOne(SalaryProfile::class);
     }
 
     public function schedules()

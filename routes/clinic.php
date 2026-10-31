@@ -24,6 +24,9 @@ use App\Http\Controllers\AttendanceReportController;
 use App\Http\Controllers\AttendanceSettingController;
 use App\Http\Controllers\StaffScheduleController;
 use App\Http\Controllers\WorkShiftController;
+use App\Http\Controllers\PayrollController;
+use App\Http\Controllers\SalaryProfileController;
+use App\Http\Controllers\ServiceFeeController;
 
 /************************ Clinic Routes ******************************/
 /*
@@ -231,6 +234,30 @@ Route::group(['middleware' => 'auth'], function () {
                 Route::get('{userId}/{date}/edit', [AttendanceReportController::class, 'edit'])->name('edit')->whereNumber('userId');
                 Route::put('{userId}/{date}', [AttendanceReportController::class, 'update'])->name('update')->whereNumber('userId');
             });
+
+            // Payroll
+            Route::group(['middleware' => 'permission:payroll.manage'], function () {
+                Route::get('salary-profiles', [SalaryProfileController::class, 'index'])->name('salary-profiles.index');
+                Route::get('salary-profiles/{userId}/edit', [SalaryProfileController::class, 'edit'])->name('salary-profiles.edit')->whereNumber('userId');
+                Route::put('salary-profiles/{userId}', [SalaryProfileController::class, 'update'])->name('salary-profiles.update')->whereNumber('userId');
+                Route::get('service-fees', [ServiceFeeController::class, 'index'])->name('service-fees.index');
+                Route::post('service-fees', [ServiceFeeController::class, 'update'])->name('service-fees.update');
+
+                Route::group(['prefix' => 'payroll', 'as' => 'payroll.'], function () {
+                    Route::get('/', [PayrollController::class, 'index'])->name('index');
+                    Route::post('store', [PayrollController::class, 'store'])->name('store');
+                    Route::get('{id}', [PayrollController::class, 'show'])->name('show')->whereNumber('id');
+                    Route::post('{id}/recalculate', [PayrollController::class, 'recalculate'])->name('recalculate')->whereNumber('id');
+                    Route::post('{id}/status', [PayrollController::class, 'changeStatus'])->name('status')->whereNumber('id');
+                    Route::get('{id}/export', [PayrollController::class, 'export'])->name('export')->whereNumber('id');
+                });
+                Route::get('payslips/{id}', [PayrollController::class, 'payslip'])->name('payslips.show')->whereNumber('id');
+                Route::post('payslips/{id}/adjust', [PayrollController::class, 'adjust'])->name('payslips.adjust')->whereNumber('id');
+            });
+            // Employees print their own published payslip; the controller checks ownership
+            Route::get('payslips/{id}/print', [PayrollController::class, 'print'])->name('payslips.print')->whereNumber('id')
+                ->middleware('permission:payroll.manage,payroll.self');
+            Route::get('my-payslips', [PayrollController::class, 'mine'])->name('payroll.mine')->middleware('permission:payroll.self');
 
             // Audit Log (read only)
             Route::get('audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index')->middleware('permission:audit.view');

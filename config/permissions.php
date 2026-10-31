@@ -72,6 +72,11 @@ return [
         'attendance.report' => 'Laporan absensi, koreksi, izin/sakit/cuti',
     ],
 
+    'Penggajian' => [
+        'payroll.self' => 'Lihat slip gaji sendiri',
+        'payroll.manage' => 'Pengaturan gaji, tarif fee tindakan, hitung & bayar gaji',
+    ],
+
     'Laporan' => [
         'reports.finance' => 'Laporan keuangan & pendapatan (termasuk ringkasan di dashboard)',
         'reports.patients' => 'Laporan pasien (KB, imunisasi, ibu hamil, dll.)',
