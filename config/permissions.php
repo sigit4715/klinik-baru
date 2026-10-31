@@ -37,6 +37,8 @@ return [
         'medical_records.view' => 'Lihat & cetak rekam medis',
         'medical_records.manage' => 'Isi pemeriksaan / buat rekam medis',
         'medical_records.edit' => 'Edit rekam medis yang sudah disimpan',
+        'letters.view' => 'Lihat & cetak surat medis (sehat, sakit, rujukan)',
+        'letters.manage' => 'Buat, edit & batalkan surat medis',
     ],
 
     'Dokter & Poli' => [

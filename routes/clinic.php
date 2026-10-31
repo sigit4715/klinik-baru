@@ -25,6 +25,7 @@ use App\Http\Controllers\AttendanceSettingController;
 use App\Http\Controllers\StaffScheduleController;
 use App\Http\Controllers\WorkShiftController;
 use App\Http\Controllers\PayrollController;
+use App\Http\Controllers\MedicalLetterController;
 use App\Http\Controllers\SalaryProfileController;
 use App\Http\Controllers\ServiceFeeController;
 
@@ -137,6 +138,17 @@ Route::group(['middleware' => 'auth'], function () {
                 Route::get('{id}', [MedicalRecordController::class, 'show'])->name('show')->middleware('permission:medical_records.view');
                 Route::get('{id}/print', [MedicalRecordController::class, 'print'])->name('print')->middleware('permission:medical_records.view');
                 Route::get('patient/{patientId}/history', [MedicalRecordController::class, 'patientHistory'])->name('patient-history')->middleware('permission:medical_records.view');
+            });
+
+            // Surat medis (sehat, sakit, rujukan)
+            Route::group(['prefix' => 'letters', 'as' => 'letters.'], function () {
+                Route::get('/', [MedicalLetterController::class, 'index'])->name('index')->middleware('permission:letters.view');
+                Route::get('create', [MedicalLetterController::class, 'create'])->name('create')->middleware('permission:letters.manage');
+                Route::post('store', [MedicalLetterController::class, 'store'])->name('store')->middleware('permission:letters.manage');
+                Route::get('{id}/edit', [MedicalLetterController::class, 'edit'])->name('edit')->middleware('permission:letters.manage')->whereNumber('id');
+                Route::put('{id}', [MedicalLetterController::class, 'update'])->name('update')->middleware('permission:letters.manage')->whereNumber('id');
+                Route::post('{id}/void', [MedicalLetterController::class, 'void'])->name('void')->middleware('permission:letters.manage')->whereNumber('id');
+                Route::get('{id}/print', [MedicalLetterController::class, 'print'])->name('print')->middleware('permission:letters.view')->whereNumber('id');
             });
 
             // Payments

@@ -74,7 +74,19 @@
                 <div class="card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <span><i class="uil uil-file-medical me-2"></i>Detail Rekam Medis</span>
-                        <div class="d-flex gap-1">
+                        <div class="d-flex gap-1 flex-wrap">
+                            @can('letters.manage')
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-success dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                        <i class="uil uil-file-alt me-1"></i>Buat Surat
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        @foreach(\App\Models\MedicalLetter::TYPES as $key => $label)
+                                            <li><a class="dropdown-item" href="{{ route('clinic.letters.create', [app()->getLocale(), 'type' => $key, 'medical_record_id' => $record->id]) }}">{{ $label }}</a></li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @endcan
                             @can('medical_records.edit')
                                 <a href="{{ route('clinic.medical-records.edit', [app()->getLocale(), $record->id]) }}"
                                     class="btn btn-sm btn-outline-primary"><i class="uil uil-edit me-1"></i>Edit</a>

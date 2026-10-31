@@ -235,6 +235,18 @@
                                 class="btn btn-outline-primary">
                                 <i class="uil uil-edit me-1"></i>Edit Data
                             </a>
+                            @can('letters.manage')
+                                <div class="dropdown">
+                                    <button class="btn btn-outline-success dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                        <i class="uil uil-file-alt me-1"></i>Buat Surat
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        @foreach(\App\Models\MedicalLetter::TYPES as $key => $label)
+                                            <li><a class="dropdown-item" href="{{ route('clinic.letters.create', [app()->getLocale(), 'type' => $key, 'patient_id' => $patient->id]) }}">{{ $label }}</a></li>
+                                        @endforeach
+                                    </ul>
+                                </div>
+                            @endcan
                             <a href="{{ route('clinic.patients.index', app()->getLocale()) }}" class="btn btn-light">
                                 <i class="uil uil-arrow-left me-1"></i>Kembali
                             </a>

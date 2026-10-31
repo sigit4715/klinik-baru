@@ -4,7 +4,8 @@
 --}}
 @php
     $withSpo2 = $withSpo2 ?? true;
-    $v = fn (string $field) => old($field, $vitals?->{$field});
+    // Works with models and plain objects that may lack some fields
+    $v = fn (string $field) => old($field, $vitals->{$field} ?? null);
     $fields = [
         ['blood_pressure', 'Tekanan Darah', 'mmHg', 'text', '120/80', null],
         ['body_temperature', 'Suhu Badan', '°C', 'number', '36.5', '0.1'],
