@@ -163,6 +163,8 @@ class AuthController extends Controller
             return redirect()->intended(route('clinic.dashboard', 'en'))->with('message', 'Selamat datang kembali, ' . $user->name . '!');
 
         } catch (\Exception $e) {
+            report($e);
+
             return redirect()->route('login')->with('message', 'Terjadi kesalahan saat login dengan Google. Silakan coba lagi.');
         }
     }
