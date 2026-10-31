@@ -106,6 +106,17 @@ class User extends Authenticatable
         return Appointment::withTrashed()->where('registered_by', $this->id)->orWhere('nurse_id', $this->id)->exists()
             || NursingAssessment::where('nurse_id', $this->id)->exists()
             || Payment::where('cashier_id', $this->id)->exists()
-            || MedicalRecord::where('edited_by', $this->id)->exists();
+            || MedicalRecord::where('edited_by', $this->id)->exists()
+            || Attendance::where('user_id', $this->id)->exists();
+    }
+
+    public function schedules()
+    {
+        return $this->hasMany(StaffSchedule::class);
+    }
+
+    public function attendances()
+    {
+        return $this->hasMany(Attendance::class);
     }
 }

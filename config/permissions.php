@@ -66,6 +66,12 @@ return [
         'services.delete' => 'Hapus layanan',
     ],
 
+    'Absensi Karyawan' => [
+        'attendance.self' => 'Absen masuk/pulang & lihat jadwal sendiri',
+        'attendance.manage' => 'Kelola shift, jadwal karyawan & pengaturan lokasi absensi',
+        'attendance.report' => 'Laporan absensi, koreksi, izin/sakit/cuti',
+    ],
+
     'Laporan' => [
         'reports.finance' => 'Laporan keuangan & pendapatan (termasuk ringkasan di dashboard)',
         'reports.patients' => 'Laporan pasien (KB, imunisasi, ibu hamil, dll.)',

@@ -238,6 +238,50 @@
             </li>
         @endcanany
 
+        @canany(['attendance.self', 'attendance.manage', 'attendance.report'])
+            <li class="menu-title mt-30">
+                <span>Absensi Karyawan</span>
+            </li>
+        @endcanany
+        @can('attendance.self')
+            <li>
+                <a href="{{ route('clinic.attendance.my', $locale) }}" class="{{ $is('attendance') ? 'active' : '' }}">
+                    <span class="nav-icon uil uil-fingerprint"></span>
+                    <span class="menu-text">Absensi Saya</span>
+                </a>
+            </li>
+        @endcan
+        @can('attendance.manage')
+            <li>
+                <a href="{{ route('clinic.schedules.index', $locale) }}" class="{{ $is('schedules*') ? 'active' : '' }}">
+                    <span class="nav-icon uil uil-calendar-alt"></span>
+                    <span class="menu-text">Jadwal Karyawan</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ route('clinic.work-shifts.index', $locale) }}" class="{{ $is('work-shifts*') ? 'active' : '' }}">
+                    <span class="nav-icon uil uil-clock"></span>
+                    <span class="menu-text">Shift Kerja</span>
+                </a>
+            </li>
+        @endcan
+        @can('attendance.report')
+            <li>
+                <a href="{{ route('clinic.attendance-report.index', $locale) }}" class="{{ $is('attendance-report*') ? 'active' : '' }}">
+                    <span class="nav-icon uil uil-chart-line"></span>
+                    <span class="menu-text">Laporan Absensi</span>
+                </a>
+            </li>
+        @endcan
+        @can('attendance.manage')
+            <li>
+                <a href="{{ route('clinic.attendance-settings.edit', $locale) }}" class="{{ $is('attendance-settings') ? 'active' : '' }}">
+                    <span class="nav-icon uil uil-map-marker"></span>
+                    <span class="menu-text">Pengaturan Absensi</span>
+                </a>
+            </li>
+        @endcan
+
         <li class="menu-title mt-30">
             <span>Pengaturan</span>
         </li>

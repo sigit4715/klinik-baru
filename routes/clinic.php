@@ -19,6 +19,11 @@ use App\Http\Controllers\ArchiveController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\NursingController;
 use App\Http\Controllers\PoliController;
+use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\AttendanceReportController;
+use App\Http\Controllers\AttendanceSettingController;
+use App\Http\Controllers\StaffScheduleController;
+use App\Http\Controllers\WorkShiftController;
 
 /************************ Clinic Routes ******************************/
 /*
@@ -192,6 +197,39 @@ Route::group(['middleware' => 'auth'], function () {
             Route::group(['prefix' => 'archive', 'as' => 'archive.', 'middleware' => 'permission:archive.manage'], function () {
                 Route::get('/', [ArchiveController::class, 'index'])->name('index');
                 Route::post('{type}/{id}/restore', [ArchiveController::class, 'restore'])->name('restore')->whereNumber('id');
+            });
+
+            // Absensi karyawan: own check-in/out
+            Route::group(['prefix' => 'attendance', 'as' => 'attendance.', 'middleware' => 'permission:attendance.self'], function () {
+                Route::get('/', [AttendanceController::class, 'index'])->name('my');
+                Route::post('check-in', [AttendanceController::class, 'checkIn'])->name('check-in')->middleware('throttle:20,1');
+                Route::post('check-out', [AttendanceController::class, 'checkOut'])->name('check-out')->middleware('throttle:20,1');
+            });
+
+            // Shifts, roster and attendance location settings
+            Route::group(['middleware' => 'permission:attendance.manage'], function () {
+                Route::group(['prefix' => 'work-shifts', 'as' => 'work-shifts.'], function () {
+                    Route::get('/', [WorkShiftController::class, 'index'])->name('index');
+                    Route::post('store', [WorkShiftController::class, 'store'])->name('store');
+                    Route::get('{id}/edit', [WorkShiftController::class, 'edit'])->name('edit')->whereNumber('id');
+                    Route::put('{id}', [WorkShiftController::class, 'update'])->name('update')->whereNumber('id');
+                    Route::delete('{id}', [WorkShiftController::class, 'destroy'])->name('destroy')->whereNumber('id');
+                });
+                Route::group(['prefix' => 'schedules', 'as' => 'schedules.'], function () {
+                    Route::get('/', [StaffScheduleController::class, 'index'])->name('index');
+                    Route::post('update', [StaffScheduleController::class, 'update'])->name('update');
+                    Route::post('copy-previous', [StaffScheduleController::class, 'copyPrevious'])->name('copy-previous');
+                });
+                Route::get('attendance-settings', [AttendanceSettingController::class, 'edit'])->name('attendance-settings.edit');
+                Route::put('attendance-settings', [AttendanceSettingController::class, 'update'])->name('attendance-settings.update');
+            });
+
+            // Attendance report and corrections
+            Route::group(['prefix' => 'attendance-report', 'as' => 'attendance-report.', 'middleware' => 'permission:attendance.report'], function () {
+                Route::get('/', [AttendanceReportController::class, 'index'])->name('index');
+                Route::get('export', [AttendanceReportController::class, 'export'])->name('export');
+                Route::get('{userId}/{date}/edit', [AttendanceReportController::class, 'edit'])->name('edit')->whereNumber('userId');
+                Route::put('{userId}/{date}', [AttendanceReportController::class, 'update'])->name('update')->whereNumber('userId');
             });
 
             // Audit Log (read only)
