@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Validator;
 use App\Models\Medicine;
+use Illuminate\Validation\Rule;
 use App\Models\StockMovement;
 
 class MedicineController extends Controller
@@ -74,6 +75,13 @@ class MedicineController extends Controller
             'min_stock' => 'nullable|integer|min:0',
             'expired_date' => 'nullable|date',
             'status' => 'nullable|in:active,inactive',
+            'generic_name' => 'nullable|string|max:255',
+            'dosage_form' => 'nullable|string|max:50',
+            'strength' => 'nullable|string|max:50',
+            'drug_class' => ['nullable', Rule::in(array_keys(Medicine::DRUG_CLASSES))],
+            'rack_location' => 'nullable|string|max:50',
+            'manufacturer' => 'nullable|string|max:255',
+            'barcode' => 'nullable|string|max:100',
         ]);
 
         if ($validators->fails()) {
@@ -93,6 +101,9 @@ class MedicineController extends Controller
             $medicine->sell_price = $request->sell_price;
             $medicine->expired_date = $request->expired_date;
             $medicine->status = $request->status ?? 'active';
+            foreach (['generic_name', 'dosage_form', 'strength', 'drug_class', 'rack_location', 'manufacturer', 'barcode'] as $field) {
+                $medicine->{$field} = $request->input($field) ?: null;
+            }
             $medicine->save();
 
             // Opening stock goes through the stock card
@@ -127,6 +138,13 @@ class MedicineController extends Controller
             'min_stock' => 'nullable|integer|min:0',
             'expired_date' => 'nullable|date',
             'status' => 'nullable|in:active,inactive',
+            'generic_name' => 'nullable|string|max:255',
+            'dosage_form' => 'nullable|string|max:50',
+            'strength' => 'nullable|string|max:50',
+            'drug_class' => ['nullable', Rule::in(array_keys(Medicine::DRUG_CLASSES))],
+            'rack_location' => 'nullable|string|max:50',
+            'manufacturer' => 'nullable|string|max:255',
+            'barcode' => 'nullable|string|max:100',
         ]);
 
         if ($validators->fails()) {
@@ -144,6 +162,9 @@ class MedicineController extends Controller
         $medicine->sell_price = $request->sell_price;
         $medicine->expired_date = $request->expired_date;
         $medicine->status = $request->status ?? 'active';
+        foreach (['generic_name', 'dosage_form', 'strength', 'drug_class', 'rack_location', 'manufacturer', 'barcode'] as $field) {
+            $medicine->{$field} = $request->input($field) ?: null;
+        }
         $medicine->save();
 
         return redirect()->route('clinic.medicines.index', app()->getLocale())

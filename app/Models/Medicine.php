@@ -17,6 +17,13 @@ class Medicine extends Model
     protected $fillable = [
         'code',
         'name',
+        'generic_name',
+        'dosage_form',
+        'strength',
+        'drug_class',
+        'rack_location',
+        'manufacturer',
+        'barcode',
         'category',
         'unit',
         'stock',
@@ -35,6 +42,29 @@ class Medicine extends Model
 
     /** Stock changes are already traced on the stock card */
     protected array $auditExclude = ['stock'];
+
+    /** Golongan obat (regulasi) */
+    public const DRUG_CLASSES = [
+        'bebas' => 'Obat Bebas',
+        'bebas_terbatas' => 'Obat Bebas Terbatas',
+        'keras' => 'Obat Keras',
+        'psikotropika' => 'Psikotropika',
+        'narkotika' => 'Narkotika',
+        'jamu' => 'Jamu / Herbal',
+        'alkes' => 'Alat Kesehatan / BMHP',
+    ];
+
+    public const DOSAGE_FORMS = ['Tablet', 'Kaplet', 'Kapsul', 'Sirup', 'Suspensi', 'Drop', 'Puyer', 'Salep', 'Krim', 'Gel', 'Injeksi', 'Infus', 'Suppositoria', 'Inhaler', 'Tetes Mata', 'Tetes Telinga', 'Lainnya'];
+
+    public function drugClassLabel(): ?string
+    {
+        return self::DRUG_CLASSES[$this->drug_class] ?? null;
+    }
+
+    public function purchaseItems()
+    {
+        return $this->hasMany(PurchaseItem::class);
+    }
 
     public function stockMovements()
     {
@@ -95,6 +125,12 @@ class Medicine extends Model
     {
         return $query->whereNotNull('expired_date')
             ->where('expired_date', '<=', now()->addDays($days));
+    }
+
+    /** Days before expiry that trigger a warning (Profil Klinik, default 30) */
+    public static function expiryWarningDays(): int
+    {
+        return max(1, (int) (ClinicSetting::get('expiry_warning_days', 30) ?: 30));
     }
 
     public static function generateCode()

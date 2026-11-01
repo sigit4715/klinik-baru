@@ -66,6 +66,10 @@ return [
         'medicines.manage' => 'Tambah & edit data obat',
         'medicines.stock' => 'Stok masuk, retur, stok opname & obat dibuang',
         'medicines.delete' => 'Hapus (arsipkan) obat',
+        'pharmacy.dashboard' => 'Dashboard farmasi',
+        'suppliers.manage' => 'Kelola data supplier',
+        'purchases.manage' => 'Penerimaan barang (faktur pembelian)',
+        'purchases.return' => 'Retur barang ke supplier',
     ],
 
     'Layanan / Tindakan' => [

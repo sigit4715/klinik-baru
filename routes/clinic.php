@@ -27,6 +27,9 @@ use App\Http\Controllers\WorkShiftController;
 use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\MedicalLetterController;
 use App\Http\Controllers\SupportOrderController;
+use App\Http\Controllers\SupplierController;
+use App\Http\Controllers\PurchaseController;
+use App\Http\Controllers\PharmacyDashboardController;
 use App\Http\Controllers\SalaryProfileController;
 use App\Http\Controllers\ServiceFeeController;
 
@@ -125,6 +128,28 @@ Route::group(['middleware' => 'auth'], function () {
                 Route::get('{id}/stock-card', [MedicineController::class, 'stockCard'])->name('stock-card')->middleware('permission:medicines.view');
                 Route::post('{id}/stock-movements', [MedicineController::class, 'storeMovement'])->name('stock-movements.store')->middleware('permission:medicines.stock');
             });
+
+            // Farmasi: suppliers, purchase receipts, returns to suppliers
+            Route::group(['prefix' => 'suppliers', 'as' => 'suppliers.', 'middleware' => 'permission:suppliers.manage'], function () {
+                Route::get('/', [SupplierController::class, 'index'])->name('index');
+                Route::post('store', [SupplierController::class, 'store'])->name('store');
+                Route::get('{id}/edit', [SupplierController::class, 'edit'])->name('edit')->whereNumber('id');
+                Route::put('{id}', [SupplierController::class, 'update'])->name('update')->whereNumber('id');
+                Route::delete('{id}', [SupplierController::class, 'destroy'])->name('destroy')->whereNumber('id');
+            });
+            Route::group(['prefix' => 'purchases', 'as' => 'purchases.', 'middleware' => 'permission:purchases.manage'], function () {
+                Route::get('/', [PurchaseController::class, 'index'])->name('index');
+                Route::get('create', [PurchaseController::class, 'create'])->name('create');
+                Route::post('store', [PurchaseController::class, 'store'])->name('store');
+                Route::get('{id}', [PurchaseController::class, 'show'])->name('show')->whereNumber('id');
+            });
+            Route::group(['prefix' => 'purchase-returns', 'as' => 'purchase-returns.', 'middleware' => 'permission:purchases.return'], function () {
+                Route::get('/', [PurchaseController::class, 'returns'])->name('index');
+                Route::get('create', [PurchaseController::class, 'createReturn'])->name('create');
+                Route::post('store', [PurchaseController::class, 'storeReturn'])->name('store');
+                Route::get('{id}', [PurchaseController::class, 'showReturn'])->name('show')->whereNumber('id');
+            });
+            Route::get('pharmacy', [PharmacyDashboardController::class, 'index'])->name('pharmacy.dashboard')->middleware('permission:pharmacy.dashboard');
 
             // Appointments
             Route::group(['prefix' => 'appointments', 'as' => 'appointments.'], function () {

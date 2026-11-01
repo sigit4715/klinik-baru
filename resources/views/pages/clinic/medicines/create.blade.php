@@ -71,6 +71,7 @@
                                         value="{{ old('sell_price') }}" min="0" required>
                                 </div>
                             </div>
+                            @include('pages.clinic.medicines._detail_fields', ['medicine' => $medicine ?? null])
                             <button type="submit" class="btn btn-primary">Simpan</button>
                             <a href="{{ route('clinic.medicines.index', app()->getLocale()) }}"
                                 class="btn btn-light">Batal</a>

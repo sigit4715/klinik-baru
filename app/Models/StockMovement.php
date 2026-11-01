@@ -15,6 +15,7 @@ class StockMovement extends Model
         'return' => 'Retur / pengembalian',
         'adjustment' => 'Penyesuaian (stok opname)',
         'disposal' => 'Dibuang (rusak/kedaluwarsa)',
+        'supplier_return' => 'Retur ke supplier',
     ];
 
     /** Types a user can enter by hand on the stock card page */

@@ -35,8 +35,33 @@
                         </h2>
                         <div class="small">Stok minimum: {{ $medicine->min_stock }} {{ $medicine->unit }}</div>
                         <div class="small">Kedaluwarsa: {{ $medicine->expired_date?->format('d/m/Y') ?? '-' }}</div>
+                        <table class="table table-sm table-borderless small mt-2 mb-0">
+                            @if($medicine->generic_name)<tr><td class="ps-0 text-muted">Generik</td><td>{{ $medicine->generic_name }}</td></tr>@endif
+                            @if($medicine->dosage_form || $medicine->strength)<tr><td class="ps-0 text-muted">Sediaan</td><td>{{ $medicine->dosage_form }} {{ $medicine->strength }}</td></tr>@endif
+                            @if($medicine->drug_class)<tr><td class="ps-0 text-muted">Golongan</td><td>{{ $medicine->drugClassLabel() }}</td></tr>@endif
+                            @if($medicine->rack_location)<tr><td class="ps-0 text-muted">Rak</td><td>{{ $medicine->rack_location }}</td></tr>@endif
+                            @if($medicine->manufacturer)<tr><td class="ps-0 text-muted">Pabrik</td><td>{{ $medicine->manufacturer }}</td></tr>@endif
+                            @if($medicine->barcode)<tr><td class="ps-0 text-muted">Barcode</td><td>{{ $medicine->barcode }}</td></tr>@endif
+                            <tr><td class="ps-0 text-muted">Harga beli / jual</td><td>Rp {{ number_format((float) $medicine->buy_price, 0, ',', '.') }} / Rp {{ number_format((float) $medicine->sell_price, 0, ',', '.') }}</td></tr>
+                        </table>
                     </div>
                 </div>
+
+                @php $lastPurchases = $medicine->purchaseItems()->with('purchase.supplier')->latest('id')->limit(5)->get(); @endphp
+                @if($lastPurchases->isNotEmpty())
+                    <div class="card mb-4">
+                        <div class="card-header"><h6><i class="uil uil-truck me-2"></i>Pembelian Terakhir</h6></div>
+                        <div class="card-body small">
+                            @foreach($lastPurchases as $pi)
+                                <div class="{{ $loop->last ? '' : 'border-bottom pb-1 mb-1' }}">
+                                    {{ $pi->purchase?->purchase_date?->format('d/m/Y') }} · {{ $pi->purchase?->supplier?->name }}<br>
+                                    {{ $pi->qty }} {{ $medicine->unit }} @ Rp {{ number_format((float) $pi->buy_price, 0, ',', '.') }}
+                                    @if($pi->expired_date) · ED {{ $pi->expired_date->format('d/m/Y') }} @endif
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
 
                 @can('medicines.stock')
                     @unless($medicine->trashed())
@@ -126,6 +151,14 @@
                                                 @elseif($movement->reference instanceof \App\Models\PaymentRefund)
                                                     @can('payments.view')
                                                         <a href="{{ route('clinic.payments.show', [app()->getLocale(), $movement->reference->payment_id]) }}" class="small">(pembayaran)</a>
+                                                    @endcan
+                                                @elseif($movement->reference instanceof \App\Models\Purchase)
+                                                    @can('purchases.manage')
+                                                        <a href="{{ route('clinic.purchases.show', [app()->getLocale(), $movement->reference_id]) }}" class="small">(penerimaan)</a>
+                                                    @endcan
+                                                @elseif($movement->reference instanceof \App\Models\PurchaseReturn)
+                                                    @can('purchases.return')
+                                                        <a href="{{ route('clinic.purchase-returns.show', [app()->getLocale(), $movement->reference_id]) }}" class="small">(retur supplier)</a>
                                                     @endcan
                                                 @endif
                                             </td>
