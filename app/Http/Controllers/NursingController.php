@@ -41,7 +41,7 @@ class NursingController extends Controller
 
     public function edit($language, $appointmentId)
     {
-        $appointment = Appointment::with(['patient', 'nurse', 'registeredBy', 'nursingAssessment.nurse'])->findOrFail($appointmentId);
+        $appointment = Appointment::with(['patient', 'nurse', 'registeredBy', 'nursingAssessment.nurse', 'supportOrders.service', 'supportOrders.files'])->findOrFail($appointmentId);
 
         if ($response = $this->rejectIfLocked($appointment)) {
             return $response;

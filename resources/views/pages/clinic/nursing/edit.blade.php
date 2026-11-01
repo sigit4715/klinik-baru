@@ -11,6 +11,8 @@
             <div class="col-lg-4">
                 @include('pages.clinic.medical-records._patient_card', ['patient' => $appointment->patient])
 
+                @include('pages.clinic.support._card', ['appointment' => $appointment])
+
                 @if($lastRecord)
                     <div class="card mb-3">
                         <div class="card-header"><i class="uil uil-history me-1"></i>Kunjungan Terakhir ({{ $lastRecord->created_at->format('d/m/Y') }})</div>

@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Validator;
+use App\Models\Poli;
 use App\Models\Service;
+use Illuminate\Validation\Rule;
 
 class ServiceController extends Controller
 {
@@ -34,7 +36,8 @@ class ServiceController extends Controller
         $title = "Tambah Layanan Baru";
         $description = "Form tambah layanan klinik";
         $code = Service::generateCode();
-        return view('pages.clinic.services.create', compact('title', 'description', 'code'));
+        $polis = Poli::active()->orderBy('name')->get();
+        return view('pages.clinic.services.create', compact('title', 'description', 'code', 'polis'));
     }
 
     public function store(Request $request)
@@ -42,6 +45,9 @@ class ServiceController extends Controller
         $validators = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'price' => 'required|numeric|min:0',
+            'category' => ['required', Rule::in(array_keys(Service::CATEGORIES))],
+            'poli_id' => ['nullable', 'integer', Rule::exists('polis', 'id')->whereNull('deleted_at')],
+            'status' => 'nullable|in:active,inactive',
         ]);
 
         if ($validators->fails()) {
@@ -52,6 +58,8 @@ class ServiceController extends Controller
         $service = new Service();
         $service->code = Service::generateCode();
         $service->name = $request->name;
+        $service->category = $request->category;
+        $service->poli_id = $request->poli_id ?: null;
         $service->description = $request->description;
         $service->price = $request->price;
         $service->status = $request->status ?? 'active';
@@ -67,7 +75,9 @@ class ServiceController extends Controller
         $title = "Edit Layanan";
         $description = "Ubah data layanan";
 
-        return view('pages.clinic.services.edit', compact('title', 'description', 'service'));
+        $polis = Poli::orderBy('name')->get();
+
+        return view('pages.clinic.services.edit', compact('title', 'description', 'service', 'polis'));
     }
 
     public function update(Request $request, $language, $id)
@@ -75,6 +85,9 @@ class ServiceController extends Controller
         $validators = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'price' => 'required|numeric|min:0',
+            'category' => ['required', Rule::in(array_keys(Service::CATEGORIES))],
+            'poli_id' => ['nullable', 'integer', Rule::exists('polis', 'id')->whereNull('deleted_at')],
+            'status' => 'nullable|in:active,inactive',
         ]);
 
         if ($validators->fails()) {
@@ -84,6 +97,8 @@ class ServiceController extends Controller
 
         $service = Service::findOrFail($id);
         $service->name = $request->name;
+        $service->category = $request->category;
+        $service->poli_id = $request->poli_id ?: null;
         $service->description = $request->description;
         $service->price = $request->price;
         $service->status = $request->status ?? 'active';

@@ -69,6 +69,11 @@
                         @include('pages.clinic.medical-records._nurse_card', ['assessment' => $record->appointment->nursingAssessment, 'appointment' => $record->appointment])
                     </div>
                 @endif
+                @if($record->appointment && $record->appointment->supportOrders->isNotEmpty())
+                    <div class="mt-3">
+                        @include('pages.clinic.support._card', ['appointment' => $record->appointment, 'showOrderButton' => false])
+                    </div>
+                @endif
             </div>
             <div class="col-lg-8">
                 <div class="card">

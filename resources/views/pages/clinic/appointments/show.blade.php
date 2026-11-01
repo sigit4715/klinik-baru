@@ -232,6 +232,15 @@
                                 class="btn btn-info"><i class="uil uil-file-medical me-1"></i>Lihat Rekam Medis</a>
                         @endcan
                     @endif
+                    @if($appointment->canCompleteSupportOnly())
+                        @canany(['support.manage', 'payments.manage', 'appointments.manage'])
+                            <form method="POST" action="{{ route('clinic.support-orders.complete-visit', [app()->getLocale(), $appointment->id]) }}"
+                                onsubmit="return confirm('Selesaikan kunjungan ini tanpa pemeriksaan dokter dan teruskan ke kasir?')">
+                                @csrf
+                                <button class="btn btn-outline-success"><i class="uil uil-check-circle me-1"></i>Selesai (Khusus Penunjang)</button>
+                            </form>
+                        @endcanany
+                    @endif
                     @if($appointment->status == 'completed' && $appointment->needsPayment())
                         @can('payments.manage')
                             <a href="{{ route('clinic.payments.create', [app()->getLocale(), $appointment->id]) }}"
@@ -246,6 +255,10 @@
                     @endif
                     <a href="{{ route('clinic.appointments.index', app()->getLocale()) }}" class="btn btn-light">Kembali</a>
                 </div>
+
+                @if($appointment->status !== 'cancelled' && ($appointment->supportOrders->isNotEmpty() || $appointment->needsPayment()))
+                    @include('pages.clinic.support._card', ['appointment' => $appointment, 'showOrderButton' => $appointment->needsPayment()])
+                @endif
 
                 <!-- Medical Record -->
                 @if($appointment->medicalRecord)

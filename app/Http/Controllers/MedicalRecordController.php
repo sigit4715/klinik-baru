@@ -102,7 +102,7 @@ class MedicalRecordController extends Controller
             return redirect()->route('clinic.medical-records.queue', app()->getLocale());
         }
 
-        $appointment = Appointment::with(['patient', 'doctor', 'poli', 'nurse', 'registeredBy', 'nursingAssessment.nurse', 'nursingAssessment.poli', 'nursingAssessment.doctor'])
+        $appointment = Appointment::with(['patient', 'doctor', 'poli', 'nurse', 'registeredBy', 'nursingAssessment.nurse', 'nursingAssessment.poli', 'nursingAssessment.doctor', 'supportOrders.service', 'supportOrders.files'])
             ->findOrFail($appointmentId);
 
         if ($existing = MedicalRecord::where('appointment_id', $appointment->id)->first()) {
@@ -184,7 +184,7 @@ class MedicalRecordController extends Controller
     public function edit($language, $id)
     {
         $record = MedicalRecord::with(['appointment.patient', 'appointment.nurse', 'appointment.registeredBy', 'appointment.poli', 'appointment.payment',
-            'appointment.nursingAssessment.nurse', 'doctor', 'editor'])->findOrFail($id);
+            'appointment.nursingAssessment.nurse', 'appointment.supportOrders.service', 'appointment.supportOrders.files', 'doctor', 'editor'])->findOrFail($id);
         $this->authorizeEdit($record);
 
         $appointment = $record->appointment;
@@ -437,7 +437,7 @@ class MedicalRecordController extends Controller
 
     public function show($language, $id)
     {
-        $record = MedicalRecord::with(['patient', 'doctor', 'appointment'])->findOrFail($id);
+        $record = MedicalRecord::with(['patient', 'doctor', 'appointment.supportOrders.service', 'appointment.supportOrders.files', 'appointment.nursingAssessment'])->findOrFail($id);
         $title = "Detail Rekam Medis";
         $description = "Informasi lengkap rekam medis";
 

@@ -163,6 +163,24 @@
                                                             </a>
                                                         @endcan
                                                     @endif
+                                                    @php $supportCount = $apt->supportOrders->where('status', '!=', 'cancelled')->count(); @endphp
+                                                    @if($apt->status !== 'cancelled' && $apt->needsPayment())
+                                                        @can('support.order')
+                                                            <a href="{{ route('clinic.support-orders.create', [app()->getLocale(), $apt->id]) }}"
+                                                                class="btn btn-sm btn-outline-primary" title="Order lab/rontgen/EKG">
+                                                                <i class="uil uil-flask"></i>{{ $supportCount ? ' ' . $supportCount : '' }}
+                                                            </a>
+                                                        @endcan
+                                                    @endif
+                                                    @if($apt->canCompleteSupportOnly())
+                                                        @canany(['support.manage', 'payments.manage', 'appointments.manage'])
+                                                            <form method="POST" action="{{ route('clinic.support-orders.complete-visit', [app()->getLocale(), $apt->id]) }}" class="d-inline"
+                                                                onsubmit="return confirm('Selesaikan kunjungan khusus penunjang dan teruskan ke kasir?')">
+                                                                @csrf
+                                                                <button class="btn btn-sm btn-outline-success" title="Selesai (khusus penunjang)"><i class="uil uil-check-circle"></i> Ke Kasir</button>
+                                                            </form>
+                                                        @endcanany
+                                                    @endif
                                                     <a href="{{ route('clinic.appointments.print-struk', [app()->getLocale(), $apt->id]) }}"
                                                         class="btn btn-sm btn-outline-success" target="_blank"
                                                         title="Cetak Struk Antrian">

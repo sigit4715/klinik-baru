@@ -76,7 +76,7 @@
             </li>
         @endcan
 
-        @canany(['medical_records.view', 'medical_records.manage', 'doctors.view', 'letters.view'])
+        @canany(['medical_records.view', 'medical_records.manage', 'doctors.view', 'letters.view', 'support.view', 'support.manage'])
             <li class="menu-title mt-30">
                 <span>Tindakan Dokter</span>
             </li>
@@ -102,6 +102,14 @@
                 </ul>
             </li>
         @endcan
+        @canany(['support.view', 'support.manage'])
+            <li>
+                <a href="{{ route('clinic.support-orders.index', $locale) }}" class="{{ $is('support-orders*') ? 'active' : '' }}">
+                    <span class="nav-icon uil uil-flask"></span>
+                    <span class="menu-text">Poli Penunjang</span>
+                </a>
+            </li>
+        @endcanany
         @can('letters.view')
             <li>
                 <a href="{{ route('clinic.letters.index', $locale) }}" class="{{ $is('letters*') ? 'active' : '' }}">

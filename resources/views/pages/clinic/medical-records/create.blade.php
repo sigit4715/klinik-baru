@@ -11,6 +11,9 @@
             <div class="col-lg-4">
                 @include('pages.clinic.medical-records._patient_card')
                 @include('pages.clinic.medical-records._nurse_card')
+                @if($appointment)
+                    @include('pages.clinic.support._card', ['appointment' => $appointment])
+                @endif
                 @include('pages.clinic.medical-records._history_card')
             </div>
             <div class="col-lg-8">

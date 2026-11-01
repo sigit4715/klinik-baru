@@ -36,7 +36,7 @@
                             <tr>
                                 <th>Kode</th>
                                 <th>Nama Layanan</th>
-                                <th>Deskripsi</th>
+                                <th>Kategori</th>
                                 <th>Harga</th>
                                 <th>Status</th>
                                 <th>Aksi</th>
@@ -47,7 +47,7 @@
                                 <tr>
                                     <td><code>{{ $service->code }}</code></td>
                                     <td><strong>{{ $service->name }}</strong></td>
-                                    <td>{{ Str::limit($service->description, 50) }}</td>
+                                    <td>{{ $service->categoryLabel() }}@if($service->poli)<br><small class="text-muted">{{ $service->poli->name }}</small>@endif</td>
                                     <td>Rp {{ number_format($service->price, 0, ',', '.') }}</td>
                                     <td><span
                                             class="badge bg-{{ $service->status == 'active' ? 'success' : 'secondary' }}">{{ $service->status == 'active' ? 'Aktif' : 'Tidak Aktif' }}</span>

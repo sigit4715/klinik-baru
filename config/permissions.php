@@ -41,6 +41,12 @@ return [
         'letters.manage' => 'Buat, edit & batalkan surat medis',
     ],
 
+    'Poli Penunjang (Lab/Radiologi/EKG)' => [
+        'support.order' => 'Pesan pemeriksaan penunjang untuk pasien',
+        'support.view' => 'Lihat daftar & hasil penunjang (termasuk file hasil)',
+        'support.manage' => 'Input hasil & upload file hasil penunjang',
+    ],
+
     'Dokter & Poli' => [
         'doctors.view' => 'Lihat daftar dokter',
         'doctors.manage' => 'Tambah & edit dokter',

@@ -96,6 +96,55 @@
                                     sembuh!"</small>
                             </div>
 
+                            <h6 class="mt-5 mb-3"><i class="uil uil-receipt me-1"></i>Struk / Invoice</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-4">
+                                    <label class="form-label fw-500">Ukuran Kertas Bawaan</label>
+                                    <select name="receipt_paper" class="form-select">
+                                        @foreach(['58' => 'Thermal 58 mm', '80' => 'Thermal 80 mm', 'a4' => 'A4 (invoice)'] as $value => $label)
+                                            <option value="{{ $value }}" @selected(old('receipt_paper', $settings['receipt_paper'] ?? '80') === $value)>{{ $label }}</option>
+                                        @endforeach
+                                    </select>
+                                    <small class="text-muted">Bisa diganti saat mencetak.</small>
+                                </div>
+                                <div class="col-md-6 mb-4">
+                                    <input type="hidden" name="receipt_show_items" value="0">
+                                    <div class="form-check form-switch mt-md-4">
+                                        <input type="checkbox" class="form-check-input" id="receiptShowItems" name="receipt_show_items" value="1"
+                                            @checked(old('receipt_show_items', $settings['receipt_show_items'] ?? '1') == '1')>
+                                        <label class="form-check-label" for="receiptShowItems">Tampilkan rincian item</label>
+                                    </div>
+                                    <small class="text-muted d-block">Jika dimatikan, struk hanya menampilkan total bayar.</small>
+                                    <input type="hidden" name="receipt_show_doctor" value="0">
+                                    <div class="form-check form-switch mt-2">
+                                        <input type="checkbox" class="form-check-input" id="receiptShowDoctor" name="receipt_show_doctor" value="1"
+                                            @checked(old('receipt_show_doctor', $settings['receipt_show_doctor'] ?? '1') == '1')>
+                                        <label class="form-check-label" for="receiptShowDoctor">Tampilkan nama dokter</label>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <h6 class="mt-3 mb-3"><i class="uil uil-capsule me-1"></i>Farmasi</h6>
+                            <div class="row">
+                                <div class="col-md-6 mb-4">
+                                    <label class="form-label fw-500">Biaya Racik per Racikan</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">Rp</span>
+                                        <input type="number" name="compounding_fee" min="0" step="1" class="form-control"
+                                            value="{{ old('compounding_fee', $settings['compounding_fee'] ?? 0) }}">
+                                    </div>
+                                    <small class="text-muted">Tarif yang berlaku disimpan di setiap resep; perubahan tidak mengubah tagihan lama.</small>
+                                </div>
+                                <div class="col-md-6 mb-4">
+                                    <label class="form-label fw-500">Peringatan Kedaluwarsa</label>
+                                    <div class="input-group">
+                                        <input type="number" name="expiry_warning_days" min="1" max="365" class="form-control"
+                                            value="{{ old('expiry_warning_days', $settings['expiry_warning_days'] ?? 30) }}">
+                                        <span class="input-group-text">hari sebelumnya</span>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div class="mt-4">
                                 <button type="submit" class="btn btn-primary btn-lg">
                                     <i class="uil uil-save me-2"></i>Simpan Perubahan

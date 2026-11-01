@@ -14,6 +14,8 @@ class Service extends Model
     protected $fillable = [
         'code',
         'name',
+        'category',
+        'poli_id',
         'description',
         'price',
         'status',
@@ -22,6 +24,27 @@ class Service extends Model
     protected $casts = [
         'price' => 'decimal:2',
     ];
+
+    public const CATEGORIES = [
+        'konsultasi' => 'Konsultasi',
+        'tindakan' => 'Tindakan',
+        'penunjang' => 'Penunjang (Lab/Radiologi/EKG)',
+    ];
+
+    public function poli()
+    {
+        return $this->belongsTo(Poli::class)->withTrashed();
+    }
+
+    public function categoryLabel(): string
+    {
+        return self::CATEGORIES[$this->category] ?? ucfirst((string) $this->category);
+    }
+
+    public function scopeSupport($query)
+    {
+        return $query->where('category', 'penunjang');
+    }
 
     public function scopeActive($query)
     {

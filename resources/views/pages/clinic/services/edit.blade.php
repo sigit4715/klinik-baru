@@ -20,6 +20,7 @@
                                 <input type="text" name="name" class="form-control"
                                     value="{{ old('name', $service->name) }}" required>
                             </div>
+                            @include('pages.clinic.services._category_fields', ['service' => $service ?? null])
                             <div class="mb-3">
                                 <label class="form-label">Deskripsi</label>
                                 <textarea name="description" class="form-control"

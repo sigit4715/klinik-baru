@@ -51,6 +51,11 @@ class Appointment extends Model
         return $this->hasOne(NursingAssessment::class);
     }
 
+    public function supportOrders()
+    {
+        return $this->hasMany(SupportOrder::class)->orderBy('id');
+    }
+
     // withTrashed: visits of archived patients/doctors must still show who they were
     public function patient()
     {
@@ -157,6 +162,17 @@ class Appointment extends Model
         $parts = array_filter([$this->poli?->name, $this->doctor?->name]);
 
         return $parts ? implode(' - ', $parts) : 'Ruang Pemeriksaan';
+    }
+
+    /** Open visit with no doctor exam whose support exams are all finished: can go straight to the cashier */
+    public function canCompleteSupportOnly(): bool
+    {
+        if (! in_array($this->status, self::OPEN_STATUSES, true) || $this->medicalRecord) {
+            return false;
+        }
+        $active = $this->supportOrders->where('status', '!=', 'cancelled');
+
+        return $active->isNotEmpty() && ! $active->contains(fn ($o) => $o->isOpen());
     }
 
     /** Complaint from the nurse step, falling back to the one typed at registration (old visits) */

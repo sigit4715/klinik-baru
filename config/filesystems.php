@@ -35,6 +35,14 @@ return [
             'root' => storage_path('app'),
         ],
 
+        // Patient documents (support results). Never web-accessible; served by a permission-checked controller.
+        'private' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private'),
+            'visibility' => 'private',
+            'throw' => false,
+        ],
+
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),

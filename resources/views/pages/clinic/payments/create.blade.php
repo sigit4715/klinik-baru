@@ -414,6 +414,12 @@
             </div>
         @endif
 
+        @if(($openSupport ?? 0) > 0)
+            <div class="alert alert-warning">
+                <i class="uil uil-flask me-1"></i>{{ $openSupport }} pemeriksaan penunjang belum selesai. Biayanya sudah ikut ditagihkan di bawah.
+            </div>
+        @endif
+
         <form action="{{ route('clinic.payments.store', app()->getLocale()) }}" method="POST" id="paymentForm">
             @csrf
             <input type="hidden" name="appointment_id" value="{{ $appointment->id ?? '' }}">

@@ -30,7 +30,7 @@ class AppointmentController extends Controller
 
     public function today(Request $request)
     {
-        $query = Appointment::with(['patient', 'doctor', 'poli', 'nurse', 'nursingAssessment', 'payment'])
+        $query = Appointment::with(['patient', 'doctor', 'poli', 'nurse', 'nursingAssessment', 'payment', 'medicalRecord', 'supportOrders'])
             ->today();
 
         $search = trim((string) $request->query('search'));
@@ -131,7 +131,7 @@ class AppointmentController extends Controller
 
     public function show($language, $id)
     {
-        $appointment = Appointment::with(['patient', 'doctor', 'poli', 'nurse', 'registeredBy', 'nursingAssessment.nurse', 'medicalRecord', 'payment'])->findOrFail($id);
+        $appointment = Appointment::with(['patient', 'doctor', 'poli', 'nurse', 'registeredBy', 'nursingAssessment.nurse', 'medicalRecord', 'payment', 'supportOrders.service', 'supportOrders.files'])->findOrFail($id);
         $title = "Detail Antrian";
         $description = "Informasi lengkap antrian";
 

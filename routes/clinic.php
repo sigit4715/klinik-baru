@@ -26,6 +26,7 @@ use App\Http\Controllers\StaffScheduleController;
 use App\Http\Controllers\WorkShiftController;
 use App\Http\Controllers\PayrollController;
 use App\Http\Controllers\MedicalLetterController;
+use App\Http\Controllers\SupportOrderController;
 use App\Http\Controllers\SalaryProfileController;
 use App\Http\Controllers\ServiceFeeController;
 
@@ -82,6 +83,22 @@ Route::group(['middleware' => 'auth'], function () {
                 Route::get('{appointmentId}', [NursingController::class, 'edit'])->name('edit')->whereNumber('appointmentId');
                 Route::put('{appointmentId}', [NursingController::class, 'update'])->name('update')->whereNumber('appointmentId');
             });
+
+            // Poli penunjang: orders, results and private result files
+            Route::group(['prefix' => 'support-orders', 'as' => 'support-orders.'], function () {
+                Route::get('/', [SupportOrderController::class, 'index'])->name('index')->middleware('permission:support.view,support.manage');
+                Route::get('create/{appointmentId}', [SupportOrderController::class, 'create'])->name('create')->middleware('permission:support.order')->whereNumber('appointmentId');
+                Route::post('store/{appointmentId}', [SupportOrderController::class, 'store'])->name('store')->middleware('permission:support.order')->whereNumber('appointmentId');
+                Route::get('{id}/result', [SupportOrderController::class, 'edit'])->name('edit')->middleware('permission:support.manage')->whereNumber('id');
+                Route::put('{id}', [SupportOrderController::class, 'update'])->name('update')->middleware('permission:support.manage')->whereNumber('id');
+                Route::post('{id}/cancel', [SupportOrderController::class, 'cancel'])->name('cancel')->middleware('permission:support.order,support.manage')->whereNumber('id');
+                Route::post('complete-visit/{appointmentId}', [SupportOrderController::class, 'completeVisit'])->name('complete-visit')
+                    ->middleware('permission:support.manage,payments.manage,appointments.manage')->whereNumber('appointmentId');
+            });
+            Route::get('support-files/{id}', [SupportOrderController::class, 'download'])->name('support-files.show')
+                ->middleware('permission:support.view,support.manage,medical_records.view')->whereNumber('id');
+            Route::delete('support-files/{id}', [SupportOrderController::class, 'destroyFile'])->name('support-files.destroy')
+                ->middleware('permission:support.manage')->whereNumber('id');
 
             // Services
             Route::group(['prefix' => 'services', 'as' => 'services.'], function () {

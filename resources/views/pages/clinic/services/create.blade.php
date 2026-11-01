@@ -18,6 +18,7 @@
                                 <label class="form-label">Nama Layanan <span class="text-danger">*</span></label>
                                 <input type="text" name="name" class="form-control" value="{{ old('name') }}" required>
                             </div>
+                            @include('pages.clinic.services._category_fields', ['service' => $service ?? null])
                             <div class="mb-3">
                                 <label class="form-label">Deskripsi</label>
                                 <textarea name="description" class="form-control"

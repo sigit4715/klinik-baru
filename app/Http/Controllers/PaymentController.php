@@ -38,9 +38,10 @@ class PaymentController extends Controller
         $patient = null;
         $medicalRecord = null;
         $items = [];
+        $openSupport = 0;
 
         if ($appointmentId) {
-            $appointment = Appointment::with(['patient', 'medicalRecord'])->findOrFail($appointmentId);
+            $appointment = Appointment::with(['patient', 'medicalRecord', 'supportOrders.service'])->findOrFail($appointmentId);
             $patient = $appointment->patient;
             $medicalRecord = $appointment->medicalRecord;
 
@@ -68,6 +69,22 @@ class PaymentController extends Controller
                     ];
                 }
             }
+
+            // Support exams (lab/radiology/EKG) ordered for this visit are billed as services
+            foreach ($appointment->supportOrders->where('status', '!=', 'cancelled') as $order) {
+                if (! $order->service) {
+                    continue;
+                }
+                $items[] = [
+                    'type' => 'service',
+                    'id' => $order->service->id,
+                    'name' => $order->service->name,
+                    'qty' => $order->qty,
+                    'price' => $order->service->price,
+                    'subtotal' => $order->qty * $order->service->price,
+                ];
+            }
+            $openSupport = $appointment->supportOrders->filter(fn ($o) => $o->isOpen())->count();
         }
 
         $medicines = Medicine::active()->get();
@@ -83,7 +100,8 @@ class PaymentController extends Controller
             'items',
             'medicines',
             'services',
-            'invoice_number'
+            'invoice_number',
+            'openSupport'
         ));
     }
 
@@ -203,11 +221,27 @@ class PaymentController extends Controller
         return view('pages.clinic.payments.show', compact('title', 'description', 'payment'));
     }
 
-    public function invoice($language, $id)
+    /** Invoice and receipt share one template; "invoice" opens on A4 by default */
+    public function invoice(Request $request, $language, $id)
     {
-        $payment = Payment::with(['patient', 'cashier', 'appointment.patient', 'appointment.doctor'])->findOrFail($id);
+        return $this->printDocument($request, $id, 'a4');
+    }
+
+    private function printDocument(Request $request, $id, ?string $defaultPaper = null)
+    {
+        $payment = Payment::with(['patient', 'cashier', 'appointment.patient', 'appointment.doctor', 'refunds'])->findOrFail($id);
         $clinicSettings = ClinicSetting::getAllSettings();
-        return view('pages.clinic.payments.invoice', compact('payment', 'clinicSettings'));
+
+        $paper = $request->query('paper');
+        if (! in_array($paper, ['58', '80', 'a4'], true)) {
+            $paper = $defaultPaper ?? ($clinicSettings['receipt_paper'] ?? '80');
+        }
+        $showItems = $request->has('items')
+            ? $request->boolean('items')
+            : ($clinicSettings['receipt_show_items'] ?? '1') === '1';
+        $showDoctor = ($clinicSettings['receipt_show_doctor'] ?? '1') === '1';
+
+        return view('pages.clinic.payments.print', compact('payment', 'clinicSettings', 'paper', 'showItems', 'showDoctor'));
     }
 
     public function updateStatus(Request $request, $language, $id)
@@ -388,13 +422,8 @@ class PaymentController extends Controller
             ->with('success', 'Refund Rp ' . number_format($refund->amount, 0, ',', '.') . ' berhasil dicatat.');
     }
 
-    public function receipt($language, $id)
+    public function receipt(Request $request, $language, $id)
     {
-        $payment = Payment::with(['patient', 'cashier', 'appointment.patient', 'appointment.doctor'])
-            ->findOrFail($id);
-
-        $clinicSettings = ClinicSetting::getAllSettings();
-
-        return view('pages.clinic.payments.receipt', compact('payment', 'clinicSettings'));
+        return $this->printDocument($request, $id);
     }
 }
