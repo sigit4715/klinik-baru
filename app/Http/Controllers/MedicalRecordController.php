@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Validator;
+use App\Models\ClinicSetting;
 use App\Models\MedicalRecord;
 use App\Models\Appointment;
 use App\Models\Patient;
@@ -221,12 +222,7 @@ class MedicalRecordController extends Controller
                 $this->fillClinicalFields($record, $request);
 
                 if (! $this->itemsLocked($appointment)) {
-                    $oldQty = [];
-                    foreach ($record->prescriptions ?? [] as $line) {
-                        if (! empty($line['medicine_id'])) {
-                            $oldQty[(int) $line['medicine_id']] = ($oldQty[(int) $line['medicine_id']] ?? 0) + (int) ($line['qty'] ?? 0);
-                        }
-                    }
+                    $oldQty = MedicalRecord::medicineTotals($record->prescriptions ?? []);
 
                     [$prescriptions, $newQty] = $this->normalizePrescriptions($request);
                     $services = $this->normalizeServices($request);
@@ -252,7 +248,7 @@ class MedicalRecordController extends Controller
     /** Medicines, services, doctors and history used by the create/edit form */
     private function formData(?Appointment $appointment, ?MedicalRecord $record = null): array
     {
-        $usedMedicineIds = collect($record?->prescriptions ?? [])->pluck('medicine_id')->filter()->all();
+        $usedMedicineIds = array_keys(MedicalRecord::medicineTotals($record?->prescriptions ?? []));
         $usedServiceIds = collect($record?->services_used ?? [])->pluck('service_id')->filter()->all();
 
         // Prescribable now, plus anything already on this record so it still shows when editing
@@ -312,6 +308,15 @@ class MedicalRecordController extends Controller
             'prescriptions.*.qty' => 'nullable|integer|min:1|max:10000',
             'prescriptions.*.dosage' => 'nullable|string|max:255',
             'prescriptions.*.notes' => 'nullable|string|max:255',
+            'racikan' => 'nullable|array|max:20',
+            'racikan.*.name' => 'nullable|string|max:100',
+            'racikan.*.qty' => 'nullable|integer|min:1|max:1000',
+            'racikan.*.dosage' => 'nullable|string|max:255',
+            'racikan.*.notes' => 'nullable|string|max:255',
+            'racikan.*.fee' => 'nullable|numeric|min:0|max:100000000',
+            'racikan.*.components' => 'nullable|array|max:20',
+            'racikan.*.components.*.medicine_id' => ['nullable', 'integer', Rule::exists('medicines', 'id')],
+            'racikan.*.components.*.qty' => 'nullable|integer|min:1|max:10000',
             'services_used' => 'nullable|array',
             'services_used.*.service_id' => ['nullable', 'integer', Rule::exists('services', 'id')],
             'services_used.*.qty' => 'nullable|integer|min:1|max:1000',
@@ -354,10 +359,32 @@ class MedicalRecordController extends Controller
                 'notes' => (string) ($prescription['notes'] ?? ''),
             ];
             $prescriptions[] = $line;
-            $qtyPerMedicine[$line['medicine_id']] = ($qtyPerMedicine[$line['medicine_id']] ?? 0) + $line['qty'];
         }
 
-        return [$prescriptions, $qtyPerMedicine];
+        $defaultFee = (float) (ClinicSetting::get('compounding_fee', 0) ?: 0);
+        foreach ($request->input('racikan', []) as $racikan) {
+            $components = [];
+            foreach ($racikan['components'] ?? [] as $component) {
+                if (! empty($component['medicine_id']) && (int) ($component['qty'] ?? 0) > 0) {
+                    $components[] = ['medicine_id' => (int) $component['medicine_id'], 'qty' => (int) $component['qty']];
+                }
+            }
+            if (! $components) {
+                continue;
+            }
+            $prescriptions[] = [
+                'type' => 'racikan',
+                'name' => trim((string) ($racikan['name'] ?? '')) ?: 'Racikan',
+                'qty' => max(1, (int) ($racikan['qty'] ?? 1)),
+                'dosage' => (string) ($racikan['dosage'] ?? ''),
+                'notes' => (string) ($racikan['notes'] ?? ''),
+                // The fee in force when prescribed is kept on the line; later tariff changes do not touch it
+                'fee' => isset($racikan['fee']) && $racikan['fee'] !== '' ? round((float) $racikan['fee'], 2) : $defaultFee,
+                'components' => $components,
+            ];
+        }
+
+        return [$prescriptions, MedicalRecord::medicineTotals($prescriptions)];
     }
 
     private function normalizeServices(Request $request): array

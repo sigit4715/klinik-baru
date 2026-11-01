@@ -358,6 +358,7 @@
                             @endif
 
                             <!-- Prescriptions -->
+                            @include('pages.clinic.medical-records._racikan_list', ['record' => $mr])
                             @if($mr->prescriptions && count($mr->prescriptions) > 0)
                                 <div class="mb-3">
                                     <small class="text-muted text-uppercase d-block mb-2"><i class="uil uil-capsule me-1"></i>Resep

@@ -81,6 +81,68 @@ class MedicalRecord extends Model
         return $details;
     }
 
+    /**
+     * Racikan lines: {type: racikan, name, qty (bungkus/kapsul), dosage, notes, fee, components: [{medicine_id, qty}]}.
+     * Price = sum(component qty x current sell price) + the compounding fee saved on the line.
+     */
+    public function getCompoundDetails(): array
+    {
+        $lines = array_values(array_filter($this->prescriptions ?? [], fn ($l) => ($l['type'] ?? null) === 'racikan'));
+        if (! $lines) {
+            return [];
+        }
+
+        $ids = collect($lines)->flatMap(fn ($l) => array_column($l['components'] ?? [], 'medicine_id'))->filter()->unique()->all();
+        $medicines = Medicine::withTrashed()->whereIn('id', $ids)->get()->keyBy('id');
+
+        $details = [];
+        foreach ($this->prescriptions ?? [] as $index => $line) {
+            if (($line['type'] ?? null) !== 'racikan') {
+                continue;
+            }
+            $components = [];
+            $price = (float) ($line['fee'] ?? 0);
+            foreach ($line['components'] ?? [] as $component) {
+                $medicine = $medicines->get($component['medicine_id'] ?? null);
+                if ($medicine) {
+                    $components[] = ['medicine' => $medicine, 'qty' => (int) $component['qty']];
+                    $price += (int) $component['qty'] * (float) $medicine->sell_price;
+                }
+            }
+            $details[] = [
+                'index' => $index,
+                'name' => $line['name'] ?? 'Racikan',
+                'qty' => (int) ($line['qty'] ?? 1),
+                'dosage' => $line['dosage'] ?? '',
+                'notes' => $line['notes'] ?? '',
+                'fee' => (float) ($line['fee'] ?? 0),
+                'components' => $components,
+                'price' => round($price, 2),
+            ];
+        }
+
+        return $details;
+    }
+
+    /** Total quantity per medicine id over single lines and racikan components */
+    public static function medicineTotals(array $lines): array
+    {
+        $totals = [];
+        foreach ($lines as $line) {
+            if (($line['type'] ?? null) === 'racikan') {
+                foreach ($line['components'] ?? [] as $component) {
+                    if (! empty($component['medicine_id'])) {
+                        $totals[(int) $component['medicine_id']] = ($totals[(int) $component['medicine_id']] ?? 0) + (int) $component['qty'];
+                    }
+                }
+            } elseif (! empty($line['medicine_id'])) {
+                $totals[(int) $line['medicine_id']] = ($totals[(int) $line['medicine_id']] ?? 0) + (int) ($line['qty'] ?? 0);
+            }
+        }
+
+        return $totals;
+    }
+
     public function getServiceDetails()
     {
         if (!$this->services_used)

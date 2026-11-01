@@ -463,14 +463,14 @@
                                 <tr class="item-row" data-index="{{ $i }}">
                                     <td>
                                         <div class="item-name">{{ $item['name'] }}</div>
-                                        <div class="item-type">{{ $item['type'] == 'medicine' ? 'Obat' : 'Layanan' }}</div>
+                                        <div class="item-type">{{ ['medicine' => 'Obat', 'racikan' => 'Racikan', 'service' => 'Layanan'][$item['type']] ?? 'Layanan' }}</div>
                                         <input type="hidden" name="items[{{ $i }}][name]" value="{{ $item['name'] }}">
                                         <input type="hidden" name="items[{{ $i }}][type]" value="{{ $item['type'] }}">
                                         <input type="hidden" name="items[{{ $i }}][id]" value="{{ $item['id'] }}">
                                     </td>
                                     <td>
                                         <input type="number" name="items[{{ $i }}][qty]" class="input-qty item-qty"
-                                            value="{{ $item['qty'] }}" min="1" data-index="{{ $i }}">
+                                            value="{{ $item['qty'] }}" min="1" data-index="{{ $i }}" {{ $item['type'] === 'racikan' ? 'readonly' : '' }}>
                                     </td>
                                     <td>
                                         <input type="number" class="input-price item-price"

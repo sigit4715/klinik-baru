@@ -93,6 +93,7 @@
         <div class="info-row"><span class="info-label">Tindakan:</span> {{ $record->treatment ?? '-' }}</div>
     </div>
 
+    <div class="section">@include('pages.clinic.medical-records._racikan_list')</div>
     @if(count($prescriptionDetails) > 0)
         <div class="section">
             <h3>Resep Obat</h3>

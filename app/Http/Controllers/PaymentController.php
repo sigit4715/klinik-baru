@@ -58,6 +58,17 @@ class PaymentController extends Controller
                     ];
                 }
 
+                foreach ($medicalRecord->getCompoundDetails() as $racik) {
+                    $items[] = [
+                        'type' => 'racikan',
+                        'id' => $racik['index'],
+                        'name' => 'Racikan: ' . $racik['name'] . ' (' . $racik['qty'] . ')',
+                        'qty' => 1,
+                        'price' => $racik['price'],
+                        'subtotal' => $racik['price'],
+                    ];
+                }
+
                 foreach ($medicalRecord->getServiceDetails() as $serviceDetail) {
                     $items[] = [
                         'type' => 'service',
@@ -111,7 +122,7 @@ class PaymentController extends Controller
             'appointment_id' => 'required|exists:appointments,id',
             'payment_method' => 'required|in:cash,debit,credit,transfer,bpjs',
             'items' => 'required|array|min:1',
-            'items.*.type' => 'required|in:medicine,service',
+            'items.*.type' => 'required|in:medicine,service,racikan',
             'items.*.id' => 'required|integer',
             'items.*.qty' => 'required|integer|min:1|max:10000',
             'discount' => 'nullable|numeric|min:0',
@@ -145,7 +156,27 @@ class PaymentController extends Controller
                 // Rebuild items with prices from the database; client prices are ignored
                 $items = [];
                 $subtotal = 0;
+                $compounds = collect($appointment->medicalRecord?->getCompoundDetails() ?? [])->keyBy('index');
                 foreach ($request->input('items', []) as $item) {
+                    if ($item['type'] === 'racikan') {
+                        $racik = $compounds->get((int) $item['id']);
+                        if (! $racik) {
+                            throw ValidationException::withMessages(['items' => 'Racikan tidak ditemukan di rekam medis.']);
+                        }
+                        $subtotal += $racik['price'];
+                        $items[] = [
+                            'type' => 'racikan',
+                            'id' => $racik['index'],
+                            'name' => 'Racikan: ' . $racik['name'] . ' (' . $racik['qty'] . ')',
+                            'qty' => 1,
+                            'price' => $racik['price'],
+                            'subtotal' => $racik['price'],
+                            // Kept for restocking on a full refund
+                            'components' => collect($racik['components'])->map(fn ($x) => ['medicine_id' => $x['medicine']->id, 'qty' => $x['qty']])->all(),
+                        ];
+                        continue;
+                    }
+
                     $model = $item['type'] === 'medicine'
                         ? Medicine::withTrashed()->find($item['id'])
                         : Service::withTrashed()->find($item['id']);
@@ -340,7 +371,7 @@ class PaymentController extends Controller
 
         $title = 'Refund Pembayaran';
         $description = 'Pengembalian dana ' . $payment->invoice_number;
-        $hasMedicines = collect($payment->items)->contains(fn ($item) => ($item['type'] ?? null) === 'medicine');
+        $hasMedicines = collect($payment->items)->contains(fn ($item) => in_array($item['type'] ?? null, ['medicine', 'racikan'], true));
         $alreadyRestocked = $payment->refunds->contains('restocked', true);
 
         return view('pages.clinic.payments.refund', compact('title', 'description', 'payment', 'hasMedicines', 'alreadyRestocked'));
@@ -408,6 +439,12 @@ class PaymentController extends Controller
                         if (($item['type'] ?? null) === 'medicine' && (int) ($item['qty'] ?? 0) > 0) {
                             Medicine::moveStock((int) $item['id'], (int) $item['qty'], 'return', $refund,
                                 "Retur dari refund {$payment->invoice_number}");
+                        }
+                        if (($item['type'] ?? null) === 'racikan') {
+                            foreach ($item['components'] ?? [] as $component) {
+                                Medicine::moveStock((int) $component['medicine_id'], (int) $component['qty'], 'return', $refund,
+                                    "Retur racikan dari refund {$payment->invoice_number}");
+                            }
                         }
                     }
                 }

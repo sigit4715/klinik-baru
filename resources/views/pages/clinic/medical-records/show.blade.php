@@ -160,6 +160,7 @@
 
                         <p><strong>Tindakan:</strong><br>{{ $record->treatment ?? '-' }}</p>
 
+                        @include('pages.clinic.medical-records._racikan_list')
                         @if(count($prescriptionDetails) > 0)
                             <hr>
                             <h6>Resep Obat</h6>

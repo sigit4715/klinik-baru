@@ -872,7 +872,20 @@
                     $todayPayments = $canFinance
                         ? \App\Models\Payment::revenueBetween(today()->startOfDay(), today()->endOfDay())['net']
                         : 0;
-                    $notifCount = $pendingPayments + $lowStockCount;
+                    // Expiry alerts are cached for 5 minutes so the bell stays cheap on every page
+                    $expiry = $canMedicines ? \Illuminate\Support\Facades\Cache::remember('pharmacy_expiry_alerts', 300, function () {
+                        $days = \App\Models\Medicine::expiryWarningDays();
+                        $base = fn () => \App\Models\Medicine::where('status', 'active')->where('stock', '>', 0)->whereNotNull('expired_date');
+                        return [
+                            'days' => $days,
+                            'expired' => $base()->whereDate('expired_date', '<', today())->count(),
+                            'expiring' => $base()->whereDate('expired_date', '>=', today())->whereDate('expired_date', '<=', today()->addDays($days))->count(),
+                        ];
+                    }) : ['days' => 30, 'expired' => 0, 'expiring' => 0];
+                    $notifCount = $pendingPayments + $lowStockCount + $expiry['expired'] + $expiry['expiring'];
+                    $medicineLink = auth()->user()?->can('pharmacy.dashboard')
+                        ? route('clinic.pharmacy.dashboard', app()->getLocale())
+                        : route('clinic.medicines.low-stock', app()->getLocale());
                 @endphp
                 <div class="dropdown-custom">
                     <a href="javascript:;" class="nav-item-toggle {{ $notifCount > 0 ? 'icon-active' : '' }}">
@@ -919,6 +932,26 @@
                                 </li>
                             @endif
 
+                            {{-- Obat kedaluwarsa / hampir kedaluwarsa --}}
+                            @if($expiry['expired'] > 0)
+                                <li class="nav-notification__single nav-notification__single--unread d-flex flex-wrap">
+                                    <div class="nav-notification__type nav-notification__type--danger"><i class="uil uil-exclamation-triangle fs-5"></i></div>
+                                    <div class="nav-notification__details">
+                                        <p><a href="{{ $medicineLink }}" class="subject stretched-link">Obat Kedaluwarsa</a></p>
+                                        <p><span class="time-posted text-danger">{{ $expiry['expired'] }} obat masih ada stok</span></p>
+                                    </div>
+                                </li>
+                            @endif
+                            @if($expiry['expiring'] > 0)
+                                <li class="nav-notification__single nav-notification__single--unread d-flex flex-wrap">
+                                    <div class="nav-notification__type nav-notification__type--warning"><i class="uil uil-clock fs-5"></i></div>
+                                    <div class="nav-notification__details">
+                                        <p><a href="{{ $medicineLink }}" class="subject stretched-link">Hampir Kedaluwarsa</a></p>
+                                        <p><span class="time-posted">{{ $expiry['expiring'] }} obat dalam {{ $expiry['days'] }} hari</span></p>
+                                    </div>
+                                </li>
+                            @endif
+
                             {{-- Obat Stok Rendah --}}
                             @forelse($lowStockMedicines as $medicine)
                                 <li class="nav-notification__single nav-notification__single--unread d-flex flex-wrap">
@@ -939,7 +972,7 @@
                                     </div>
                                 </li>
                             @empty
-                                @if($pendingPayments == 0)
+                                @if($pendingPayments == 0 && $expiry['expired'] + $expiry['expiring'] == 0)
                                     <li class="text-center py-3 text-muted">
                                         <i class="uil uil-check-circle fs-4 text-success"></i>
                                         <p class="mb-0">Semua aman! Tidak ada notifikasi</p>

@@ -8,7 +8,12 @@
     $itemsLocked = $itemsLocked ?? false;
     // Create: start from the nurse's measurements; edit: from the saved record
     $source = $record ?? $assessment;
-    $prescriptionLines = old('prescriptions', $record?->prescriptions ?: [[]]);
+    // Single medicines and racikan are stored together; split them for the two editors
+    $savedLines = $record?->prescriptions ?? [];
+    $singleLines = array_values(array_filter($savedLines, fn ($l) => ($l['type'] ?? null) !== 'racikan'));
+    $prescriptionLines = old('prescriptions', $singleLines ?: [[]]);
+    $racikanLines = old('racikan', array_values(array_filter($savedLines, fn ($l) => ($l['type'] ?? null) === 'racikan')));
+    $defaultFee = (float) (\App\Models\ClinicSetting::get('compounding_fee', 0) ?: 0);
     $serviceLines = old('services_used', $record?->services_used ?: [[]]);
 @endphp
 
@@ -58,6 +63,10 @@
         @empty
             <li class="text-muted">Tidak ada</li>
         @endforelse
+        @foreach($record->getCompoundDetails() as $racik)
+            <li>Racikan {{ $racik['name'] }} ({{ $racik['qty'] }}) {{ $racik['dosage'] ? '(' . $racik['dosage'] . ')' : '' }}:
+                {{ collect($racik['components'])->map(fn ($x) => $x['medicine']->name . ' ' . $x['qty'])->implode(', ') }}</li>
+        @endforeach
     </ul>
     <h6>Layanan/Tindakan</h6>
     <ul class="mb-3">
@@ -93,6 +102,8 @@
         @endforeach
     </div>
     <button type="button" class="btn btn-sm btn-outline-primary mb-3" onclick="addPrescription()"><i class="uil uil-plus"></i> Tambah Obat</button>
+
+    @include('pages.clinic.medical-records._racikan')
 
     <h6 class="mt-4">Layanan/Tindakan</h6>
     <div id="services">

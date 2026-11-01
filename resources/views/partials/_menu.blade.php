@@ -209,7 +209,7 @@
             </li>
         @endcan
 
-        @canany(['services.view', 'medicines.view', 'medicines.manage', 'polis.manage'])
+        @canany(['services.view', 'medicines.view', 'medicines.manage', 'polis.manage', 'pharmacy.dashboard', 'suppliers.manage', 'purchases.manage', 'purchases.return'])
             <li class="menu-title mt-30">
                 <span>Master Data & Apotek</span>
             </li>
@@ -254,6 +254,22 @@
             </li>
         @endcanany
 
+        @can('pharmacy.dashboard')
+            <li><a href="{{ route('clinic.pharmacy.dashboard', $locale) }}" class="{{ $is('pharmacy') ? 'active' : '' }}">
+                <span class="nav-icon uil uil-chart-pie"></span><span class="menu-text">Dashboard Farmasi</span></a></li>
+        @endcan
+        @can('purchases.manage')
+            <li><a href="{{ route('clinic.purchases.index', $locale) }}" class="{{ $is('purchases*') ? 'active' : '' }}">
+                <span class="nav-icon uil uil-truck"></span><span class="menu-text">Penerimaan Barang</span></a></li>
+        @endcan
+        @can('purchases.return')
+            <li><a href="{{ route('clinic.purchase-returns.index', $locale) }}" class="{{ $is('purchase-returns*') ? 'active' : '' }}">
+                <span class="nav-icon uil uil-redo"></span><span class="menu-text">Retur ke Supplier</span></a></li>
+        @endcan
+        @can('suppliers.manage')
+            <li><a href="{{ route('clinic.suppliers.index', $locale) }}" class="{{ $is('suppliers*') ? 'active' : '' }}">
+                <span class="nav-icon uil uil-store"></span><span class="menu-text">Supplier</span></a></li>
+        @endcan
         @canany(['attendance.self', 'attendance.manage', 'attendance.report'])
             <li class="menu-title mt-30">
                 <span>Absensi Karyawan</span>

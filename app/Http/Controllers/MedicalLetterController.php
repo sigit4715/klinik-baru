@@ -208,6 +208,10 @@ class MedicalLetterController extends Controller
         foreach ($record->getPrescriptionDetails() as $item) {
             $lines[] = '- ' . $item['medicine']->name . ' ' . $item['qty'] . ($item['dosage'] ? ' (' . $item['dosage'] . ')' : '');
         }
+        foreach ($record->getCompoundDetails() as $racik) {
+            $lines[] = '- Racikan ' . $racik['name'] . ' ' . $racik['qty'] . ($racik['dosage'] ? ' (' . $racik['dosage'] . ')' : '') . ': '
+                . collect($racik['components'])->map(fn ($x) => $x['medicine']->name . ' ' . $x['qty'])->implode(', ');
+        }
         foreach ($record->getServiceDetails() as $item) {
             $lines[] = '- ' . $item['service']->name;
         }
